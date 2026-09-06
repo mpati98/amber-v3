@@ -1,0 +1,110 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model AdminAccount {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  passwordHash        String
+  resetTokenHash      String?   @unique
+  resetTokenExpiresAt DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+//=====================
+//=== TANG KINH CAC ===
+//=====================
+
+enum PublicationStatus {
+  TO_READ
+  READING
+  READ
+  ABANDONED
+}
+
+enum PublicationFormat {
+  PHYSICAL
+  EBOOK
+  AUDIOBOOK
+}
+
+model Publication {
+  id            String            @id @default(cuid())
+  title         String
+  author        String?
+  isbn          String?
+  coverUrl      String?
+  format        PublicationFormat @default(PHYSICAL)
+  status        PublicationStatus @default(TO_READ)
+  rating        Int?              // 1-5, chỉ có khi status = READ
+  currentPage   Int?
+  totalPages    Int?
+  tags          String            @default("[]")
+  url           String?
+  review        String?           // bài review dài, markdown
+  notes         String?           // ghi chú nhanh, ngắn
+  dateAdded     DateTime          @default(now())
+  dateStarted   DateTime?
+  dateFinished  DateTime?
+  highlights    Highlight[]
+}
+
+model Highlight {
+  id            String      @id @default(cuid())
+  publicationId String
+  publication   Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  quote         String
+  page          Int?
+  note          String?
+  createdAt     DateTime    @default(now())
+}
+
+model ReadingGoal {
+  id          String @id @default(cuid())
+  year        Int    @unique
+  targetBooks Int?
+  targetPages Int?
+  note        String?
+  // tiến độ tự tính từ Publication.dateFinished trong năm đó, không lưu cứng
+}
+
+enum DocumentType {
+  TEXT
+  CHECKLIST
+  MINDMAP
+  IMAGE
+  FILE
+}
+
+model Topic {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String?
+  documents   Document[]
+}
+
+model Document {
+  id            String       @id @default(cuid())
+  title         String
+  type          DocumentType @default(TEXT)
+  content       String?      // markdown — dùng chung cho TEXT / CHECKLIST / MINDMAP
+  attachmentUrl String?      // Vercel Blob URL — dùng cho IMAGE / FILE
+  tags          String       @default("[]")
+  pinned        Boolean      @default(false)
+  sourceUrl     String?
+  topicId       String?
+  topic         Topic?       @relation(fields: [topicId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}

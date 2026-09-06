@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-ink-950: #05070f;
+  --color-ink-900: #0c1128;
+  --color-ink-800: #18204a;
+
+  --color-yugen-500: #8b7ff0;
+  --color-yugen-300: #c9c3f5;
+
+  --color-shuiro-500: #e0616f;
+
+  --color-kincha-400: #eccb8a;
+  --color-kincha-200: #f3e2c0;
+
+  --font-serif-display: var(--font-noto-serif);
+  --font-sans: var(--font-inter);
+}
+
+html,
+body {
+  background: var(--color-ink-950);
+}
+
+@keyframes drift {
+  from { transform: translateX(-5%); }
+  to { transform: translateX(5%); }
+}
+
+@keyframes glow {
+  0%, 100% { opacity: .5; }
+  50% { opacity: .8; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

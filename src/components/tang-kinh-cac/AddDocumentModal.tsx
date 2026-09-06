@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Modal from "@/components/tang-kinh-cac/Modal";
 import { apiFetch } from "@/lib/clientFetch";
+import { uploadFile } from "@/lib/upload";
 
 const inputClass =
   "w-full rounded-sm border border-white/15 bg-transparent px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-kincha-400/60 focus:outline-none";
@@ -27,9 +28,20 @@ export default function AddDocumentModal({
   const [type, setType] = useState("TEXT");
   const [content, setContent] = useState("");
   const [attachmentUrl, setAttachmentUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const url = await uploadFile(file);
+    setUploading(false);
+    if (url) setAttachmentUrl(url);
+  }
 
   async function submit() {
     if (!title.trim()) return;
+    if (!CONTENT_TYPES.includes(type) && !attachmentUrl) return;
     const created = await apiFetch("/api/tang-kinh-cac/documents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -77,18 +89,27 @@ export default function AddDocumentModal({
         ) : (
           <div>
             <input
-              className={inputClass}
-              placeholder={type === "IMAGE" ? "URL ảnh" : "URL file"}
-              value={attachmentUrl}
-              onChange={(e) => setAttachmentUrl(e.target.value)}
+              type="file"
+              accept={type === "IMAGE" ? "image/*" : undefined}
+              onChange={handleFileChange}
+              disabled={uploading}
+              className="block w-full text-sm text-white/70 file:mr-3 file:rounded-sm file:border file:border-kincha-400/40 file:bg-transparent file:px-3 file:py-1.5 file:text-sm file:text-kincha-200 hover:file:bg-kincha-400/10"
             />
-            <p className="mt-1 text-xs text-white/30">
-              Bản demo dùng URL trực tiếp — bản thật sẽ upload qua Vercel Blob và tự điền URL vào đây.
-            </p>
+            {uploading && <p className="mt-2 text-xs text-yugen-300">Đang tải lên...</p>}
+            {!uploading && attachmentUrl && type === "IMAGE" && (
+              <img src={attachmentUrl} alt="" className="mt-2 h-24 rounded-sm object-cover" />
+            )}
+            {!uploading && attachmentUrl && type === "FILE" && (
+              <p className="mt-2 truncate text-xs text-white/50">{attachmentUrl}</p>
+            )}
           </div>
         )}
 
-        <button onClick={submit} className="w-full rounded-sm bg-kincha-400 py-2 text-sm font-medium text-ink-950">
+        <button
+          onClick={submit}
+          disabled={uploading}
+          className="w-full rounded-sm bg-kincha-400 py-2 text-sm font-medium text-ink-950 disabled:opacity-50"
+        >
           Lưu vào Tàng Kinh Các
         </button>
       </div>

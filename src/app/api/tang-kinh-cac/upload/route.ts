@@ -7,6 +7,6 @@ export const POST = withApiError(async (req: NextRequest) => {
   const file = form.get("file") as File | null;
   if (!file) return NextResponse.json({ error: "Thiếu file" }, { status: 400 });
 
-  const blob = await put(`tang-kinh-cac/${Date.now()}-${file.name}`, file, { access: "public" });
-  return NextResponse.json({ url: blob.url });
+  const blob = await put(`tang-kinh-cac/${Date.now()}-${file.name}`, file, { access: "private" });
+  return NextResponse.json({ url: `/api/tang-kinh-cac/blob/${blob.pathname}` });
 });

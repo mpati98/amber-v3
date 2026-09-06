@@ -22,6 +22,13 @@ body {
   background: var(--color-ink-950);
 }
 
+/* Tailwind's Preflight intentionally omits `cursor: pointer` on <button> —
+   without this, every button falls back to the browser's default arrow
+   cursor on hover instead of feeling clickable. */
+button:not(:disabled) {
+  cursor: pointer;
+}
+
 @keyframes drift {
   from { transform: translateX(-5%); }
   to { transform: translateX(5%); }

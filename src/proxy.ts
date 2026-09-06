@@ -26,9 +26,13 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  // Exclude Next internals and any static file (extension in the path) —
-  // public/assets/*.webp and the like must never go through the auth check,
-  // since the image optimizer's internal fetch for those doesn't carry the
-  // browser's session cookie and would otherwise always get redirected.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+  // Exclude Next internals and the public/assets static sprites — the image
+  // optimizer's internal fetch for those doesn't carry the browser's session
+  // cookie and would otherwise always get redirected.
+  //
+  // This must NOT be a blanket "any path with a dot" exclusion: API routes
+  // like /api/tang-kinh-cac/blob/<pathname>.jpg (proxying private Vercel Blob
+  // files) also contain a dot, and a blanket rule would let them skip the
+  // auth check entirely, serving "private" files to anyone.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|assets/).*)"],
 };

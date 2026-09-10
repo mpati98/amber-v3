@@ -1,38 +1,33 @@
-import { NextRequest, NextResponse } from "next/server";
-import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/reset-password", "/api/auth"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/register",
+  "/api/auth", // bao gồm cả /api/auth/register và các route của next-auth
+  "/api/telegram/webhook", // Telegram gọi vào, không có session — tự verify bằng secret token riêng
+  "/api/health",
+  // next/image tự gọi lại route nội bộ (không kèm cookie) để tối ưu ảnh local,
+  // nên assets tĩnh phải public — chặn ở đây sẽ làm mọi ảnh trong scene vỡ ảnh.
+  "/assets",
+];
 
-export async function proxy(req: NextRequest) {
-  const { pathname } = req.nextUrl;
-
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+export default auth((req) => {
+  const isPublic = PUBLIC_PATHS.some((p) => req.nextUrl.pathname.startsWith(p));
+  if (isPublic || req.auth) {
     return NextResponse.next();
   }
 
-  const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
-  const session = token ? await verifySessionToken(token) : null;
-
-  if (!session) {
-    if (pathname.startsWith("/api")) {
-      return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
-    }
-    const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
+  // API gọi mà chưa đăng nhập -> trả 401 thay vì redirect (client fetch không theo redirect HTML)
+  if (req.nextUrl.pathname.startsWith("/api")) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  return NextResponse.next();
-}
+  const loginUrl = new URL("/login", req.nextUrl.origin);
+  loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
+  return NextResponse.redirect(loginUrl);
+});
 
 export const config = {
-  // Exclude Next internals and the public/assets static sprites — the image
-  // optimizer's internal fetch for those doesn't carry the browser's session
-  // cookie and would otherwise always get redirected.
-  //
-  // This must NOT be a blanket "any path with a dot" exclusion: API routes
-  // like /api/tang-kinh-cac/blob/<pathname>.jpg (proxying private Vercel Blob
-  // files) also contain a dot, and a blanket rule would let them skip the
-  // auth check entirely, serving "private" files to anyone.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|assets/).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

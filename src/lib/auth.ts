@@ -1,33 +1,42 @@
 import bcrypt from "bcryptjs";
-import { SignJWT, jwtVerify } from "jose";
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { users } from "@/db/schema";
 
-const secret = new TextEncoder().encode(process.env.AUTH_SECRET!);
-const SESSION_COOKIE = "session";
-const SESSION_TTL = "7d";
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  session: { strategy: "jwt" },
+  pages: { signIn: "/login" },
+  providers: [
+    Credentials({
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Mật khẩu", type: "password" },
+      },
+      async authorize(credentials) {
+        const email = credentials?.email;
+        const password = credentials?.password;
+        if (typeof email !== "string" || typeof password !== "string") return null;
 
-export async function hashPassword(plain: string) {
-  return bcrypt.hash(plain, 12);
-}
+        const user = await db.query.users.findFirst({ where: eq(users.email, email) });
+        if (!user) return null;
 
-export async function verifyPassword(plain: string, hash: string) {
-  return bcrypt.compare(plain, hash);
-}
+        const valid = await bcrypt.compare(password, user.passwordHash);
+        if (!valid) return null;
 
-export async function createSessionToken(adminId: string) {
-  return new SignJWT({ sub: adminId })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime(SESSION_TTL)
-    .sign(secret);
-}
-
-export async function verifySessionToken(token: string) {
-  try {
-    const { payload } = await jwtVerify(token, secret);
-    return payload;
-  } catch {
-    return null;
-  }
-}
-
-export const SESSION_COOKIE_NAME = SESSION_COOKIE;
+        return { id: user.id, email: user.email, name: user.name };
+      },
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) token.userId = user.id;
+      return token;
+    },
+    async session({ session, token }) {
+      if (token.userId) session.user.id = token.userId;
+      return session;
+    },
+  },
+});

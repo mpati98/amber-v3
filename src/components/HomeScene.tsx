@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 import SceneBackground from "./SceneBackground";
 import SceneForeground from "./SceneForeground";
 import BuildingHotspot from "./BuildingHotspot";
@@ -13,6 +15,7 @@ export default function HomeScene() {
   const sceneRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const { data: session } = useSession();
 
   useEffect(() => {
     const el = sceneRef.current;
@@ -54,6 +57,23 @@ export default function HomeScene() {
           <h1 className="mt-1 font-serif-display text-3xl font-semibold text-white sm:text-4xl">
             Âm Dương Giới
           </h1>
+        </div>
+
+        <div
+          className="absolute right-[3%] top-[6%] z-20 flex items-center gap-4 text-right"
+          style={{ textShadow: "0 2px 14px rgba(0,0,0,.7)" }}
+        >
+          {session?.user && (
+            <span className="hidden font-sans text-xs text-white/50 sm:inline">
+              {session.user.name || session.user.email}
+            </span>
+          )}
+          <Link
+            href="/settings"
+            className="rounded-sm border border-white/15 px-4 py-2 font-sans text-sm text-white/70 transition hover:border-kincha-400/50 hover:text-kincha-200"
+          >
+            Cài đặt
+          </Link>
         </div>
 
         {buildings.map((b, i) => (

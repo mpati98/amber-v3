@@ -1,7 +1,10 @@
-import Link from "next/link";
-import TabNav from "@/components/tang-kinh-cac/TabNav";
+import BackLink from "@/components/BackLink";
 
-export default function TangKinhCacLayout({ children }: { children: React.ReactNode }) {
+export default function TangKinhCacLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <div className="min-h-screen bg-ink-950 pb-24 text-white">
       <header className="flex items-center justify-between px-6 py-6 sm:px-10">
@@ -13,15 +16,8 @@ export default function TangKinhCacLayout({ children }: { children: React.ReactN
             Tàng Kinh Các
           </h1>
         </div>
-        <Link
-          href="/"
-          className="rounded-sm border border-white/15 px-4 py-2 font-sans text-sm text-white/70 transition hover:border-kincha-400/50 hover:text-kincha-200"
-        >
-          ← Âm Dương Giới
-        </Link>
+        <BackLink />
       </header>
-
-      <TabNav />
 
       <main className="px-6 py-8 sm:px-10">{children}</main>
     </div>

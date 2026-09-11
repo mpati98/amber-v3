@@ -13,14 +13,14 @@ export function DayGrid({ effectiveness, tasks }: DayGridProps) {
   const totalHeight = hours.length * ROW_HEIGHT * 4;
 
   return (
-    <div className="flex max-h-[600px] overflow-y-auto border border-primary-100 rounded-lg bg-bg-light">
+    <div className="flex max-h-[600px] overflow-y-auto border border-white/10 rounded-lg bg-ink-900/40">
       <EnergyRail effectiveness={effectiveness} />
 
-      <div className="w-12 shrink-0 border-r border-primary-100">
+      <div className="w-12 shrink-0 border-r border-white/10">
         {hours.map((h) => (
           <div
             key={h}
-            className="text-[11px] text-text-secondary pt-0.5"
+            className="text-[11px] text-white/40 pt-0.5"
             style={{ height: ROW_HEIGHT * 4 }}
           >
             {String(h).padStart(2, "0")}:00
@@ -32,7 +32,7 @@ export function DayGrid({ effectiveness, tasks }: DayGridProps) {
         {hours.map((h, i) => (
           <div
             key={h}
-            className="absolute left-0 right-0 border-t border-primary-50"
+            className="absolute left-0 right-0 border-t border-white/5"
             style={{ top: i * ROW_HEIGHT * 4 }}
           />
         ))}

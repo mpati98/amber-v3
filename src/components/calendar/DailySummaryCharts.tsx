@@ -16,21 +16,21 @@ function LevelBars({ title, tasks, dim }: { title: string; tasks: MockTask[]; di
 
   return (
     <div>
-      <div className="text-[10px] text-text-secondary mb-1">{title}</div>
+      <div className="text-[10px] text-white/40 mb-1">{title}</div>
       <div className="flex flex-col gap-1">
         {LEVELS.map((level) => (
           <div key={level} className="flex items-center gap-1.5">
-            <span className="w-6 shrink-0 text-[9px] text-text-secondary">
+            <span className="w-6 shrink-0 text-[9px] text-white/40">
               {importanceLabel[level]}
             </span>
-            <div className="flex-1 h-2.5 rounded-full bg-primary-50 overflow-hidden">
+            <div className="flex-1 h-2.5 rounded-full bg-white/10 overflow-hidden">
               <div
                 className={`h-full rounded-full ${importanceTagStyles[level].split(" ")[0]}`}
                 style={{ width: `${(counts[level] / max) * 100}%` }}
                 title={`${importanceLabel[level]}: ${counts[level]} task`}
               />
             </div>
-            <span className="w-3 shrink-0 text-[9px] text-primary-900 text-right">
+            <span className="w-3 shrink-0 text-[9px] text-white text-right">
               {counts[level]}
             </span>
           </div>
@@ -52,16 +52,16 @@ function BusyFreeMeter({ tasks }: { tasks: MockTask[] }) {
   return (
     <div>
       <div className="flex items-baseline justify-between mb-1">
-        <span className="text-[10px] text-text-secondary">Bận vs rảnh (06:00–22:00)</span>
-        <span className="text-[10px] text-primary-900 font-medium">
+        <span className="text-[10px] text-white/40">Bận vs rảnh (06:00–22:00)</span>
+        <span className="text-[10px] text-white font-medium">
           {fmt(busyMinutes)} / {fmt(windowMinutes)}
         </span>
       </div>
       <div
-        className="h-2.5 rounded-full bg-primary-100"
+        className="h-2.5 rounded-full bg-white/10"
         title={`Đã lên lịch ${fmt(busyMinutes)} trên tổng ${fmt(windowMinutes)} khung giờ làm việc`}
       >
-        <div className="h-full rounded-full bg-primary-500" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-kincha-400" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
@@ -87,19 +87,19 @@ function EffectivenessChart({ effectiveness }: { effectiveness: Record<number, n
 
   return (
     <div>
-      <div className="text-[10px] text-text-secondary mb-1">Hiệu suất theo giờ</div>
+      <div className="text-[10px] text-white/40 mb-1">Hiệu suất theo giờ</div>
       <svg viewBox={`0 0 ${width} ${height + 12}`} className="w-full" role="img">
-        <line x1={0} y1={height} x2={width} y2={height} stroke="var(--color-primary-100)" strokeWidth={1} />
-        <path d={areaPath} fill="var(--color-accent-500)" opacity={0.1} />
-        <path d={linePath} fill="none" stroke="var(--color-accent-500)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+        <line x1={0} y1={height} x2={width} y2={height} stroke="rgba(255,255,255,0.12)" strokeWidth={1} />
+        <path d={areaPath} fill="var(--color-kincha-400)" opacity={0.12} />
+        <path d={linePath} fill="none" stroke="var(--color-kincha-400)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
         {points.map((p) => (
           <circle
             key={p.h}
             cx={p.x}
             cy={p.y}
             r={p.h === peak.h ? 4 : 2.5}
-            fill="var(--color-accent-500)"
-            stroke="var(--color-bg-light)"
+            fill="var(--color-kincha-400)"
+            stroke="var(--color-ink-900)"
             strokeWidth={2}
           >
             <title>{`${String(p.h).padStart(2, "0")}:00 — ${Math.round(p.score * 100)}%`}</title>
@@ -109,7 +109,7 @@ function EffectivenessChart({ effectiveness }: { effectiveness: Record<number, n
           x={peak.x}
           y={Math.max(8, peak.y - 6)}
           textAnchor="middle"
-          className="fill-primary-900"
+          className="fill-white"
           style={{ font: "9px var(--font-sans)" }}
         >
           {Math.round(peak.score * 100)}%
@@ -120,7 +120,7 @@ function EffectivenessChart({ effectiveness }: { effectiveness: Record<number, n
             x={i === 0 ? 0 : i === 1 ? width / 2 : width}
             y={height + 11}
             textAnchor={i === 0 ? "start" : i === 1 ? "middle" : "end"}
-            className="fill-text-secondary"
+            className="fill-white/40"
             style={{ font: "9px var(--font-sans)" }}
           >
             {String(h).padStart(2, "0")}:00
@@ -139,7 +139,7 @@ export function DailySummaryCharts({
   effectiveness: Record<number, number>;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-3 rounded-lg border border-primary-100 bg-white p-3 mb-3">
+    <div className="grid grid-cols-2 gap-3 rounded-lg border border-white/10 bg-ink-900/40 p-3 mb-3">
       <div className="grid grid-cols-2 gap-3">
         <LevelBars title="Quan trọng" tasks={tasks} dim="importance" />
         <LevelBars title="Khẩn cấp" tasks={tasks} dim="urgency" />

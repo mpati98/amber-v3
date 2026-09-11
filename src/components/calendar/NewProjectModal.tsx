@@ -47,9 +47,9 @@ export function NewProjectModal({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent>
+      <DialogContent className="dark border border-white/10 bg-ink-900">
         <DialogHeader>
-          <DialogTitle>Thêm project</DialogTitle>
+          <DialogTitle className="font-serif-display text-lg text-kincha-400">Thêm project</DialogTitle>
         </DialogHeader>
 
         <Input
@@ -58,14 +58,15 @@ export function NewProjectModal({
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
           placeholder="VD: Sự kiện tháng 11"
+          className="border-white/15 bg-white/5 text-white placeholder:text-white/30 focus-visible:border-kincha-400/50 focus-visible:ring-kincha-400/30"
         />
-        {error && <p className="text-[12px] text-accent-700">{error}</p>}
+        {error && <p className="text-[12px] text-shuiro-500">{error}</p>}
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
+        <DialogFooter className="border-white/10 bg-transparent">
+          <Button variant="ghost" onClick={onClose} className="text-white/60 hover:bg-white/10 hover:text-white">
             Huỷ
           </Button>
-          <Button onClick={submit} disabled={submitting}>
+          <Button onClick={submit} disabled={submitting} className="bg-kincha-400 text-ink-950 hover:bg-kincha-400/80">
             {submitting ? "Đang tạo..." : "Tạo project"}
           </Button>
         </DialogFooter>

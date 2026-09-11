@@ -70,30 +70,57 @@ export function AddCourseModal({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent>
+      <DialogContent className="dark border border-white/10 bg-ink-900">
         <DialogHeader>
-          <DialogTitle>Thêm khóa học</DialogTitle>
+          <DialogTitle className="font-serif-display text-lg text-kincha-400">Thêm khóa học</DialogTitle>
         </DialogHeader>
 
-        <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Tên khóa (VD: CS50, React Advanced)" />
-        <Input value={source} onChange={(e) => setSource(e.target.value)} placeholder="Nguồn (Udemy, Coursera...)" />
-        <Input value={field} onChange={(e) => setField(e.target.value)} placeholder="Lĩnh vực (VD: Lập trình web)" />
+        <Input
+          autoFocus
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Tên khóa (VD: CS50, React Advanced)"
+          className="border-white/15 bg-white/5 text-white placeholder:text-white/30 focus-visible:border-kincha-400/50 focus-visible:ring-kincha-400/30"
+        />
+        <Input
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
+          placeholder="Nguồn (Udemy, Coursera...)"
+          className="border-white/15 bg-white/5 text-white placeholder:text-white/30 focus-visible:border-kincha-400/50 focus-visible:ring-kincha-400/30"
+        />
+        <Input
+          value={field}
+          onChange={(e) => setField(e.target.value)}
+          placeholder="Lĩnh vực (VD: Lập trình web)"
+          className="border-white/15 bg-white/5 text-white placeholder:text-white/30 focus-visible:border-kincha-400/50 focus-visible:ring-kincha-400/30"
+        />
 
         <div className="flex flex-wrap gap-1.5">
           {(Object.keys(STATUS_LABEL) as Status[]).map((s) => (
-            <Button key={s} type="button" size="sm" variant={status === s ? "default" : "secondary"} onClick={() => setStatus(s)}>
+            <Button
+              key={s}
+              type="button"
+              size="sm"
+              variant={status === s ? "default" : "secondary"}
+              onClick={() => setStatus(s)}
+              className={
+                status === s
+                  ? "bg-kincha-400 text-ink-950 hover:bg-kincha-400/80"
+                  : "bg-white/5 text-white/60 hover:bg-white/10"
+              }
+            >
               {STATUS_LABEL[s]}
             </Button>
           ))}
         </div>
 
-        {error && <p className="text-[12px] text-accent-700">{error}</p>}
+        {error && <p className="text-[12px] text-shuiro-500">{error}</p>}
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
+        <DialogFooter className="border-white/10 bg-transparent">
+          <Button variant="ghost" onClick={onClose} className="text-white/60 hover:bg-white/10 hover:text-white">
             Huỷ
           </Button>
-          <Button onClick={submit} disabled={submitting}>
+          <Button onClick={submit} disabled={submitting} className="bg-kincha-400 text-ink-950 hover:bg-kincha-400/80">
             {submitting ? "Đang tạo..." : "Tạo khóa học"}
           </Button>
         </DialogFooter>

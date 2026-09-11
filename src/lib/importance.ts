@@ -1,15 +1,15 @@
 import type { MockTask } from "./mock-data";
 
 export const importanceStyles: Record<MockTask["importance"], string> = {
-  3: "border-accent-500 bg-accent-400/10 text-accent-700",
-  2: "border-secondary-500 bg-secondary-300/20 text-primary-700",
-  1: "border-primary-300 bg-primary-50 text-primary-700",
+  3: "border-shuiro-500 bg-shuiro-500/10 text-shuiro-500",
+  2: "border-kincha-400 bg-kincha-400/10 text-kincha-400",
+  1: "border-yugen-500 bg-yugen-500/10 text-yugen-300",
 };
 
 export const importanceTagStyles: Record<MockTask["importance"], string> = {
-  3: "bg-accent-500 text-white",
-  2: "bg-secondary-500 text-primary-900",
-  1: "bg-primary-300 text-primary-900",
+  3: "bg-shuiro-500 text-white",
+  2: "bg-kincha-400 text-ink-950",
+  1: "bg-yugen-500 text-white",
 };
 
 export const importanceLabel: Record<MockTask["importance"], string> = {

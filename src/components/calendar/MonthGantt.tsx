@@ -10,9 +10,9 @@ const LABEL_WIDTH = 132;
 const daysInMonth = new Date(2026, GANTT_MONTH, 0).getDate();
 
 const barStyles: Record<1 | 2 | 3, string> = {
-  3: "bg-accent-500",
-  2: "bg-secondary-500",
-  1: "bg-primary-300",
+  3: "bg-shuiro-500",
+  2: "bg-kincha-400",
+  1: "bg-yugen-500",
 };
 
 type LocalTask = {
@@ -34,7 +34,7 @@ function DayGridLines() {
       {Array.from({ length: daysInMonth + 1 }, (_, i) => i).map((d) => (
         <div
           key={d}
-          className="absolute top-0 bottom-0 border-l border-dotted border-primary-200"
+          className="absolute top-0 bottom-0 border-l border-dotted border-white/10"
           style={{ left: d * DAY_COL_WIDTH }}
         />
       ))}
@@ -269,60 +269,75 @@ export function MonthGantt({ todayDay }: { todayDay: number }) {
 
   if (loadError) {
     return (
-      <div className="text-[13px] text-accent-700 p-3">
+      <div className="text-[13px] text-shuiro-500 p-3">
         Không tải được dữ liệu Gantt — kiểm tra API `/api/projects` và `/api/tasks` đã chạy chưa.
       </div>
     );
   }
   if (!projects) {
-    return <div className="text-[13px] text-text-secondary p-3">Đang tải...</div>;
+    return <div className="text-[13px] text-white/40 p-3">Đang tải...</div>;
+  }
+
+  if (projects.length === 0) {
+    return (
+      <div className="rounded-lg border border-white/10 bg-ink-900/40 p-3">
+        <p className="text-[12px] text-white/40">
+          Chưa có project nào — bấm &quot;+ Thêm project&quot; bên dưới để bắt đầu.
+        </p>
+        <button
+          onClick={() => setNewProjectOpen(true)}
+          className="mt-2 text-[11px] text-kincha-400 hover:underline"
+        >
+          + Thêm project
+        </button>
+        <NewProjectModal
+          open={newProjectOpen}
+          onClose={() => setNewProjectOpen(false)}
+          onCreated={(p) => setProjects((prev) => [...(prev ?? []), { id: p.id, name: p.name, tasks: [] }])}
+        />
+      </div>
+    );
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-primary-100 bg-white select-none">
+    <div className="overflow-x-auto rounded-lg border border-white/10 bg-ink-900/40 select-none">
       <div style={{ width: LABEL_WIDTH + gridWidth }}>
-        <div className="flex sticky top-0 bg-white border-b border-primary-100">
+        <div className="flex sticky top-0 bg-ink-900 border-b border-white/10">
           <div style={{ width: LABEL_WIDTH }} className="shrink-0" />
           <div className="relative" style={{ width: gridWidth, height: 24 }}>
             <DayGridLines />
             {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => (
               <div
                 key={d}
-                className="absolute top-0 text-[10px] text-text-secondary text-center"
+                className="absolute top-0 text-[10px] text-white/40 text-center"
                 style={{ left: (d - 1) * DAY_COL_WIDTH, width: DAY_COL_WIDTH }}
               >
                 {d}
               </div>
             ))}
             <div
-              className="absolute top-0 bottom-0 w-px bg-accent-500"
+              className="absolute top-0 bottom-0 w-px bg-shuiro-500"
               style={{ left: (todayDay - 1) * DAY_COL_WIDTH + DAY_COL_WIDTH / 2 }}
             />
           </div>
         </div>
 
-        {projects.length === 0 && (
-          <p className="text-[12px] text-text-secondary p-3">
-            Chưa có project nào — bấm &quot;+ Thêm project&quot; bên dưới để bắt đầu.
-          </p>
-        )}
-
         {projects.map((project) => (
           <div key={project.id}>
-            <div className="flex bg-primary-50">
+            <div className="flex bg-white/5">
               <div
                 style={{ width: LABEL_WIDTH + gridWidth }}
-                className="text-[11px] font-medium text-primary-700 px-2 py-1"
+                className="text-[11px] font-medium text-kincha-400 px-2 py-1"
               >
                 {project.name}
               </div>
             </div>
 
             {project.tasks.map((task) => (
-              <div key={task.id} className="flex items-center border-b border-primary-50">
+              <div key={task.id} className="flex items-center border-b border-white/5">
                 <div
                   style={{ width: LABEL_WIDTH }}
-                  className="shrink-0 text-[11px] text-primary-900 truncate px-2 py-1.5"
+                  className="shrink-0 text-[11px] text-white truncate px-2 py-1.5"
                 >
                   {task.title}
                 </div>
@@ -349,10 +364,10 @@ export function MonthGantt({ todayDay }: { todayDay: number }) {
               </div>
             ))}
 
-            <div className="flex items-center border-b border-primary-50">
+            <div className="flex items-center border-b border-white/5">
               <div
                 style={{ width: LABEL_WIDTH }}
-                className="shrink-0 text-[10px] text-primary-300 px-2 py-1.5"
+                className="shrink-0 text-[10px] text-white/30 px-2 py-1.5"
               >
                 + Kéo để thêm task
               </div>
@@ -364,7 +379,7 @@ export function MonthGantt({ todayDay }: { todayDay: number }) {
                 <DayGridLines />
                 {drag?.kind === "create" && drag.projectId === project.id && (
                   <div
-                    className="absolute top-1 h-4 rounded-full bg-primary-300/60 border border-dashed border-primary-500"
+                    className="absolute top-1 h-4 rounded-full bg-yugen-500/40 border border-dashed border-kincha-400"
                     style={{
                       left: (Math.min(drag.anchorDay, drag.currentDay) - 1) * DAY_COL_WIDTH,
                       width: (Math.abs(drag.currentDay - drag.anchorDay) + 1) * DAY_COL_WIDTH - 2,
@@ -378,7 +393,7 @@ export function MonthGantt({ todayDay }: { todayDay: number }) {
 
         <button
           onClick={() => setNewProjectOpen(true)}
-          className="w-full text-left text-[11px] text-primary-500 px-2 py-2 hover:bg-primary-50"
+          className="w-full text-left text-[11px] text-kincha-400 px-2 py-2 hover:bg-white/5"
         >
           + Thêm project
         </button>

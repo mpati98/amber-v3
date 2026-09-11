@@ -1,10 +1,10 @@
 import { hoursInRange, ROW_HEIGHT } from "../../lib/time";
 
 function colorForScore(score: number): string {
-  if (score >= 0.75) return "bg-accent-500";
-  if (score >= 0.5) return "bg-accent-400/60";
-  if (score >= 0.3) return "bg-secondary-300";
-  return "bg-primary-100";
+  if (score >= 0.75) return "bg-shuiro-500";
+  if (score >= 0.5) return "bg-kincha-400/60";
+  if (score >= 0.3) return "bg-yugen-500/50";
+  return "bg-white/10";
 }
 
 export function EnergyRail({ effectiveness }: { effectiveness: Record<number, number> }) {

@@ -83,7 +83,7 @@ export default function BuildingHotspot({
           height={1024}
           sizes={sizes}
           className="h-auto w-full select-none"
-          priority
+          loading="eager"
           style={{
             filter:
               "drop-shadow(0 22px 34px rgba(0,0,0,0.55)) brightness(0.92) saturate(0.95)",
@@ -102,6 +102,7 @@ export default function BuildingHotspot({
             height={1024}
             sizes={sizes}
             className="h-auto w-full select-none"
+            loading="eager"
             style={{ filter: "brightness(0.6) saturate(0.7)" }}
           />
         </motion.div>

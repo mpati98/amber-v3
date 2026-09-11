@@ -78,9 +78,9 @@ export function NewTaskModal({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent>
+      <DialogContent className="dark border border-white/10 bg-ink-900">
         <DialogHeader>
-          <DialogTitle>Thêm task — {projectName}</DialogTitle>
+          <DialogTitle className="font-serif-display text-lg text-kincha-400">Thêm task — {projectName}</DialogTitle>
         </DialogHeader>
 
         <Input
@@ -89,10 +89,11 @@ export function NewTaskModal({
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
           placeholder="Tên task"
+          className="border-white/15 bg-white/5 text-white placeholder:text-white/30 focus-visible:border-kincha-400/50 focus-visible:ring-kincha-400/30"
         />
 
         <div className="flex items-center justify-between">
-          <span className="text-[12px] text-text-secondary">
+          <span className="text-[12px] text-white/40">
             Ngày {startDay} → {endDay} thg 8
           </span>
           <div className="flex gap-1">
@@ -103,6 +104,11 @@ export function NewTaskModal({
                 size="sm"
                 variant={importance === level ? "default" : "secondary"}
                 onClick={() => setImportance(level)}
+                className={
+                  importance === level
+                    ? "bg-kincha-400 text-ink-950 hover:bg-kincha-400/80"
+                    : "bg-white/5 text-white/60 hover:bg-white/10"
+                }
               >
                 {level === 3 ? "Cao" : level === 2 ? "TB" : "Thấp"}
               </Button>
@@ -110,13 +116,13 @@ export function NewTaskModal({
           </div>
         </div>
 
-        {error && <p className="text-[12px] text-accent-700">{error}</p>}
+        {error && <p className="text-[12px] text-shuiro-500">{error}</p>}
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
+        <DialogFooter className="border-white/10 bg-transparent">
+          <Button variant="ghost" onClick={onClose} className="text-white/60 hover:bg-white/10 hover:text-white">
             Huỷ
           </Button>
-          <Button onClick={submit} disabled={submitting}>
+          <Button onClick={submit} disabled={submitting} className="bg-kincha-400 text-ink-950 hover:bg-kincha-400/80">
             {submitting ? "Đang tạo..." : "Tạo task"}
           </Button>
         </DialogFooter>

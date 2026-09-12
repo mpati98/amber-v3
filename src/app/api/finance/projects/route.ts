@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { projects, financeAccounts, financeBalanceSnapshots, financeCategories } from "@/db/schema";
 import { eq, and, lt, isNull } from "drizzle-orm";
+import { logActivity } from "@/lib/activity-log";
 
 const DEFAULT_CATEGORIES: { name: string; icon: string; kind: "INCOME" | "EXPENSE" }[] = [
   { name: "Ăn uống", icon: "🍜", kind: "EXPENSE" },
@@ -64,7 +65,7 @@ export async function POST() {
     const existing = await tx.query.projects.findFirst({
       where: and(eq(projects.userId, userId), eq(projects.type, "FINANCE"), eq(projects.startDate, toIsoDate(start))),
     });
-    if (existing) return existing;
+    if (existing) return { project: existing, isNew: false };
 
     // Lần đầu dùng Finance — seed sẵn danh mục mặc định để không phải tự tạo tay
     const categoryCount = await tx.query.financeCategories.findMany({ where: eq(financeCategories.userId, userId) });
@@ -90,8 +91,17 @@ export async function POST() {
     const totalBalance = accounts.reduce((sum, a) => sum + Number(a.currentBalance), 0);
     await tx.insert(financeBalanceSnapshots).values({ projectId: created.id, totalBalance: String(totalBalance) });
 
-    return created;
+    return { project: created, isNew: true };
   });
 
-  return NextResponse.json(result, { status: 201 });
+  if (result.isNew) {
+    await logActivity({
+      userId,
+      source: "FINANCE",
+      action: "finance.month_started",
+      title: result.project.name,
+    });
+  }
+
+  return NextResponse.json(result.project, { status: 201 });
 }

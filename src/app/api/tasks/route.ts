@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { tasks } from "@/db/schema";
 import { z } from "zod";
+import { logActivity } from "@/lib/activity-log";
 
 const createTaskSchema = z.object({
   projectId: z.string().uuid().optional(),
@@ -50,5 +51,13 @@ export async function POST(req: NextRequest) {
     .insert(tasks)
     .values({ ...parsed.data, userId: session.user.id })
     .returning();
+
+  await logActivity({
+    userId: session.user.id,
+    source: "DU_AN",
+    action: "task.created",
+    title: created.title,
+  });
+
   return NextResponse.json(created, { status: 201 });
 }

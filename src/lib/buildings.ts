@@ -37,7 +37,7 @@ export const buildings: Building[] = [
     id: "kieu-lau",
     href: "/kieu-lau",
     name: "Kiều Lâu",
-    sub: "Trang chủ & điều hướng",
+    sub: "Thông báo & tin tức",
     src: "/assets/kieu-lau.webp",
     glow: "var(--color-yugen-500)",
     style: { left: "29%", bottom: "-8%", width: "44%" },

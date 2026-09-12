@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { projects, learnCourseDetails } from "@/db/schema";
 import { z } from "zod";
+import { logActivity } from "@/lib/activity-log";
 
 const createCourseSchema = z.object({
   name: z.string().min(1),
@@ -64,6 +65,13 @@ export async function POST(req: NextRequest) {
       .returning();
 
     return { ...project, learnDetails: details };
+  });
+
+  await logActivity({
+    userId: session.user.id,
+    source: "LEARN",
+    action: "learn.course_created",
+    title: result.name,
   });
 
   return NextResponse.json(result, { status: 201 });

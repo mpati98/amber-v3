@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { boolean, date, integer, numeric, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { boolean, date, integer, jsonb, numeric, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 
 // ============================================================
 // Bảng (định nghĩa hết trước — mọi relations() dồn xuống cuối file
@@ -152,6 +152,79 @@ export const learnLessons = pgTable("learn_lessons", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// ===== Trà Đình — luyện tập tiếng Anh với AI (dự án đặc biệt, type = "PRACTICE") =====
+
+export const practiceSessionDetails = pgTable("practice_session_details", {
+  projectId: uuid("project_id")
+    .primaryKey()
+    .references(() => projects.id, { onDelete: "cascade" }),
+  mode: varchar("mode", { length: 32 }).notNull(), // CONVERSATION | EXAM_PREP | PROFESSIONAL
+  summary: text("summary"), // AI tự tóm tắt buổi học sau khi kết thúc
+});
+
+export const practiceMessages = pgTable("practice_messages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id")
+    .notNull()
+    .references(() => projects.id, { onDelete: "cascade" }),
+  role: varchar("role", { length: 16 }).notNull(), // USER | ASSISTANT
+  content: text("content").notNull(),
+  audioUrl: text("audio_url"), // Vercel Blob URL nếu có ghi âm/TTS phát lại
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// 1 dòng / kỹ năng / user — cập nhật (không tạo mới) sau mỗi buổi luyện
+export const skillScores = pgTable("skill_scores", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  skill: varchar("skill", { length: 32 }).notNull(), // GRAMMAR|VOCABULARY|LISTENING|SPEAKING|READING|WRITING
+  cefrLevel: varchar("cefr_level", { length: 4 }), // A1-C2
+  score: integer("score"), // 0-100, thang điểm nội bộ để so sánh tiến bộ theo thời gian
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ===== Kiều Lâu — trung tâm thông báo + tin tức =====
+
+// Nhật ký hành động dùng chung cho MỌI tòa — lịch sử vĩnh viễn, không phải cảnh báo
+export const activityLogs = pgTable("activity_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  source: varchar("source", { length: 32 }).notNull(), // DU_AN | FINANCE | LEARN | TRA_DINH | KIEU_LAU
+  action: varchar("action", { length: 64 }).notNull(), // "task.completed", "finance.transaction_created",...
+  title: varchar("title", { length: 255 }).notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Nguồn RSS quan tâm — chỉ lưu danh sách nguồn, KHÔNG lưu lịch sử bài viết
+export const feedSources = pgTable("feed_sources", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 255 }).notNull(),
+  url: text("url").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Cache TẠM bài viết mới nhất — mỗi lần "làm mới" XÓA SẠCH cache cũ của
+// nguồn đó rồi chèn lại bản mới. KHÔNG tích lũy lịch sử, không có tier lưu
+// vĩnh viễn nào cả — đây chỉ là section nhỏ, không phải kho lưu trữ.
+export const feedArticlesCache = pgTable("feed_articles_cache", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sourceId: uuid("source_id")
+    .notNull()
+    .references(() => feedSources.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 500 }).notNull(),
+  url: text("url").notNull(),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // ============================================================
 // Relations — đặt sau CÙNG, sau khi mọi bảng đã được định nghĩa,
 // để tránh lỗi "Cannot access 'X' before initialization" lúc runtime.
@@ -160,6 +233,7 @@ export const learnLessons = pgTable("learn_lessons", {
 export const usersRelations = relations(users, ({ many }) => ({
   projects: many(projects),
   tasks: many(tasks),
+  skillScores: many(skillScores),
 }));
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
@@ -173,6 +247,8 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   }),
   learnLessons: many(learnLessons),
   learnDetails: one(learnCourseDetails, { fields: [projects.id], references: [learnCourseDetails.projectId] }),
+  practiceMessages: many(practiceMessages),
+  practiceDetails: one(practiceSessionDetails, { fields: [projects.id], references: [practiceSessionDetails.projectId] }),
 }));
 
 export const tasksRelations = relations(tasks, ({ one, many }) => ({
@@ -220,4 +296,28 @@ export const learnCourseDetailsRelations = relations(learnCourseDetails, ({ one,
 
 export const learnLessonsRelations = relations(learnLessons, ({ one }) => ({
   project: one(projects, { fields: [learnLessons.projectId], references: [projects.id] }),
+}));
+
+export const practiceSessionDetailsRelations = relations(practiceSessionDetails, ({ one }) => ({
+  project: one(projects, { fields: [practiceSessionDetails.projectId], references: [projects.id] }),
+}));
+
+export const practiceMessagesRelations = relations(practiceMessages, ({ one }) => ({
+  project: one(projects, { fields: [practiceMessages.projectId], references: [projects.id] }),
+}));
+
+export const skillScoresRelations = relations(skillScores, ({ one }) => ({
+  user: one(users, { fields: [skillScores.userId], references: [users.id] }),
+}));
+
+export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
+  user: one(users, { fields: [activityLogs.userId], references: [users.id] }),
+}));
+
+export const feedSourcesRelations = relations(feedSources, ({ many }) => ({
+  articles: many(feedArticlesCache),
+}));
+
+export const feedArticlesCacheRelations = relations(feedArticlesCache, ({ one }) => ({
+  source: one(feedSources, { fields: [feedArticlesCache.sourceId], references: [feedSources.id] }),
 }));

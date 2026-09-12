@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { projects, learnCourseDetails } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
+import { logActivity } from "@/lib/activity-log";
 
 const updateCourseSchema = z.object({
   name: z.string().min(1).optional(),
@@ -62,6 +63,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   });
 
   if (!result) return NextResponse.json({ error: "not_found" }, { status: 404 });
+
+  if (status === "COMPLETED") {
+    await logActivity({
+      userId: session.user.id,
+      source: "LEARN",
+      action: "learn.course_completed",
+      title: result.name,
+    });
+  }
+
   return NextResponse.json(result);
 }
 

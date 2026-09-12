@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { tasks } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
+import { logActivity } from "@/lib/activity-log";
 
 const patchTaskSchema = z.object({
   title: z.string().min(1).optional(),
@@ -44,6 +45,16 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   if (!updated) {
     return NextResponse.json({ error: "task not found" }, { status: 404 });
   }
+
+  if (parsed.data.status === "DONE") {
+    await logActivity({
+      userId: session.user.id,
+      source: "DU_AN",
+      action: "task.completed",
+      title: updated.title,
+    });
+  }
+
   return NextResponse.json(updated);
 }
 

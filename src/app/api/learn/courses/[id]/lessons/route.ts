@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { learnLessons } from "@/db/schema";
 import { z } from "zod";
+import { logActivity } from "@/lib/activity-log";
 
 const createLessonSchema = z.object({
   title: z.string().min(1),
@@ -42,5 +43,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .insert(learnLessons)
     .values({ ...parsed.data, projectId: id })
     .returning();
+
+  await logActivity({
+    userId: session.user.id,
+    source: "LEARN",
+    action: "learn.lesson_logged",
+    title: created.title,
+  });
+
   return NextResponse.json(created, { status: 201 });
 }

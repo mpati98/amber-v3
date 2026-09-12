@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { financeAccounts, financeTransactions } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
+import { logActivity } from "@/lib/activity-log";
 
 const createTransactionSchema = z.object({
   projectId: z.string().uuid(),
@@ -72,6 +73,14 @@ export async function POST(req: NextRequest) {
       .where(eq(financeAccounts.id, accountId));
 
     return created;
+  });
+
+  await logActivity({
+    userId: session.user.id,
+    source: "FINANCE",
+    action: "finance.transaction_created",
+    title: result.note || (result.kind === "INCOME" ? "Thu nhập" : "Chi tiêu"),
+    metadata: { amount: result.amount, kind: result.kind },
   });
 
   return NextResponse.json(result, { status: 201 });

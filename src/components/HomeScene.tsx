@@ -15,7 +15,15 @@ export default function HomeScene() {
   const sceneRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [alertCount, setAlertCount] = useState(0);
   const { data: session } = useSession();
+
+  useEffect(() => {
+    fetch("/api/kieu-lau/notifications")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setAlertCount(data?.alerts?.length ?? 0))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const el = sceneRef.current;
@@ -68,6 +76,17 @@ export default function HomeScene() {
               {session.user.name || session.user.email}
             </span>
           )}
+          <Link
+            href="/kieu-lau"
+            className="relative rounded-sm border border-white/15 px-4 py-2 font-sans text-sm text-white/70 transition hover:border-kincha-400/50 hover:text-kincha-200"
+          >
+            Kiều Lâu
+            {alertCount > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-shuiro-500 px-1 font-sans text-[10px] font-medium text-white">
+                {alertCount}
+              </span>
+            )}
+          </Link>
           <Link
             href="/settings"
             className="rounded-sm border border-white/15 px-4 py-2 font-sans text-sm text-white/70 transition hover:border-kincha-400/50 hover:text-kincha-200"

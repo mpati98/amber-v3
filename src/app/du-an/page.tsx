@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { DayGrid } from "@/components/calendar/DayGrid";
@@ -23,7 +22,6 @@ type ViewMode = "overview" | "today";
 export default function StandardProjectsPage() {
   const [view, setView] = useState<ViewMode>("overview");
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const { data: session } = useSession();
 
   const selectedDayData = mockWeekDays.find((d) => d.date === selectedDay) ?? null;
 
@@ -33,12 +31,6 @@ export default function StandardProjectsPage() {
         <Link href="/nghi-su-duong" className="text-kincha-400 hover:text-kincha-200">
           ← Nghị Sự Đường
         </Link>
-        <div className="flex items-center gap-3">
-          <span>{session?.user?.name || session?.user?.email}</span>
-          <Link href="/settings" className="text-kincha-400 hover:text-kincha-200">
-            Cài đặt
-          </Link>
-        </div>
       </div>
 
       <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>

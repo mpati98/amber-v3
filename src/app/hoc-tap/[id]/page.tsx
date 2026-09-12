@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, use } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ScrollCard } from "@/components/tang-kinh-cac/ui";
 import { AddLessonModal } from "@/components/learn/AddLessonModal";
 
 type Status = "PLANNED" | "IN_PROGRESS" | "COMPLETED";
@@ -80,8 +81,8 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
 
   if (!course) {
     return (
-      <main className="p-4 max-w-2xl mx-auto bg-bg-light min-h-screen">
-        <p className="text-[12px] text-text-secondary">Đang tải...</p>
+      <main className="min-h-screen bg-ink-950 p-4 text-white sm:p-6 lg:p-8">
+        <p className="font-sans text-[12px] text-white/40">Đang tải...</p>
       </main>
     );
   }
@@ -89,68 +90,75 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
   const totalMinutes = lessons.reduce((s, l) => s + (l.durationMinutes ?? 0), 0);
 
   return (
-    <main className="p-4 max-w-2xl mx-auto bg-bg-light min-h-screen pb-24">
-      <Link href="/hoc-tap" className="text-[11px] text-primary-500">
+    <main className="min-h-screen bg-ink-950 p-4 pb-24 text-white sm:p-6 lg:p-8">
+      <Link href="/hoc-tap" className="font-sans text-[11px] text-kincha-400 hover:text-kincha-200">
         ← Học tập
       </Link>
 
-      <h1 className="text-lg font-semibold text-primary-900 tracking-wide mt-1 mb-1">{course.name}</h1>
-      <p className="text-[12px] text-text-secondary mb-4">
+      <h1 className="mt-1 mb-1 font-serif-display text-xl font-semibold tracking-wide text-white">{course.name}</h1>
+      <p className="mb-4 font-sans text-[12px] text-white/40">
         {[course.learnDetails?.source, course.learnDetails?.field].filter(Boolean).join(" · ") || "—"}
       </p>
 
-      <div className="flex gap-1.5 mb-4">
+      <div className="mb-4 flex gap-1.5">
         {(Object.keys(STATUS_LABEL) as Status[]).map((s) => (
           <Button
             key={s}
             size="sm"
             variant={course.learnDetails?.status === s ? "default" : "secondary"}
             onClick={() => setStatus(s)}
+            className={
+              course.learnDetails?.status === s
+                ? "bg-kincha-400 text-ink-950 hover:bg-kincha-400/80"
+                : "bg-white/5 text-white/60 hover:bg-white/10"
+            }
           >
             {STATUS_LABEL[s]}
           </Button>
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="rounded-xl bg-white border border-primary-100 p-3">
-          <p className="text-[11px] text-text-secondary mb-1">Số bài đã học</p>
-          <p className="text-base font-semibold text-primary-900">{lessons.length}</p>
-        </div>
-        <div className="rounded-xl bg-white border border-primary-100 p-3">
-          <p className="text-[11px] text-text-secondary mb-1">Tổng thời lượng</p>
-          <p className="text-base font-semibold text-primary-900">{Math.round(totalMinutes / 60)}h {totalMinutes % 60}p</p>
-        </div>
+      <div className="mb-6 grid grid-cols-2 gap-3">
+        <ScrollCard glow="kincha" className="p-3">
+          <p className="mb-1 font-sans text-[11px] text-white/40">Số bài đã học</p>
+          <p className="font-serif-display text-base font-semibold text-white">{lessons.length}</p>
+        </ScrollCard>
+        <ScrollCard glow="yugen" className="p-3">
+          <p className="mb-1 font-sans text-[11px] text-white/40">Tổng thời lượng</p>
+          <p className="font-serif-display text-base font-semibold text-white">
+            {Math.round(totalMinutes / 60)}h {totalMinutes % 60}p
+          </p>
+        </ScrollCard>
       </div>
 
-      <section className="mb-6">
-        <h2 className="text-[12px] font-medium text-primary-700 mb-2">Kết quả đạt được</h2>
+      <ScrollCard glow="yugen" className="mb-6">
+        <h2 className="mb-2 font-sans text-[12px] font-medium tracking-wide text-kincha-400">Kết quả đạt được</h2>
         <textarea
           value={outcome}
           onChange={(e) => setOutcome(e.target.value)}
           onBlur={saveOutcome}
           placeholder="Chứng chỉ, điểm số, tổng kết..."
           rows={2}
-          className="w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-[13px] outline-none focus-visible:border-ring"
+          className="w-full rounded-sm border border-white/15 bg-white/5 px-2.5 py-1.5 text-[13px] text-white placeholder:text-white/30 outline-none focus-visible:border-kincha-400/50"
         />
-      </section>
+      </ScrollCard>
 
-      <section>
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-[12px] font-medium text-primary-700">Bài học</h2>
-          <button onClick={() => setAddLessonOpen(true)} className="text-[11px] text-primary-500">
+      <ScrollCard glow="shuiro">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="font-sans text-[12px] font-medium tracking-wide text-kincha-400">Bài học</h2>
+          <button onClick={() => setAddLessonOpen(true)} className="text-[11px] text-kincha-400 hover:underline">
             + Thêm bài học
           </button>
         </div>
         {lessons.length === 0 ? (
-          <p className="text-[12px] text-text-secondary">Chưa có bài học nào.</p>
+          <p className="font-sans text-[12px] text-white/40">Chưa có bài học nào.</p>
         ) : (
-          <div className="rounded-xl bg-white border border-primary-100 px-3">
+          <div>
             {lessons.map((l) => (
-              <div key={l.id} className="flex items-center justify-between py-2 border-b border-primary-100 last:border-0 group">
+              <div key={l.id} className="group flex items-center justify-between border-b border-white/10 py-2 last:border-0">
                 <div className="min-w-0">
-                  <p className="text-[13px] text-primary-900 truncate">{l.title}</p>
-                  <p className="text-[11px] text-text-secondary">
+                  <p className="truncate font-sans text-[13px] text-white">{l.title}</p>
+                  <p className="font-sans text-[11px] text-white/40">
                     {l.studiedAt ? new Date(l.studiedAt).toLocaleDateString("vi-VN") : "—"}
                     {l.durationMinutes ? ` · ${l.durationMinutes} phút` : ""}
                     {l.note ? ` · ${l.note}` : ""}
@@ -158,7 +166,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                 </div>
                 <button
                   onClick={() => deleteLesson(l.id)}
-                  className="opacity-0 group-hover:opacity-100 text-[11px] text-text-secondary hover:text-accent-700 transition-opacity shrink-0"
+                  className="shrink-0 font-sans text-[11px] text-white/40 opacity-0 transition-opacity group-hover:opacity-100 hover:text-shuiro-500"
                 >
                   Xoá
                 </button>
@@ -166,7 +174,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
             ))}
           </div>
         )}
-      </section>
+      </ScrollCard>
 
       <AddLessonModal open={addLessonOpen} onClose={() => setAddLessonOpen(false)} courseId={id} onCreated={load} />
     </main>

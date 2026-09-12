@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 export function ScrollCard({
   children,
@@ -17,7 +18,10 @@ export function ScrollCard({
 
   return (
     <div
-      className={`group relative rounded-sm border border-white/10 bg-ink-900/60 p-5 transition-colors hover:border-[var(--glow)] ${className}`}
+      className={cn(
+        "group relative rounded-sm border border-white/10 bg-ink-900/60 p-5 transition-colors hover:border-[var(--glow)]",
+        className
+      )}
       style={{ ["--glow" as string]: glowColor }}
     >
       {children}

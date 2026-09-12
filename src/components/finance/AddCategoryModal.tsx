@@ -54,9 +54,9 @@ export function AddCategoryModal({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent>
+      <DialogContent className="dark border border-white/10 bg-ink-900">
         <DialogHeader>
-          <DialogTitle>Thêm danh mục</DialogTitle>
+          <DialogTitle className="font-serif-display text-lg text-kincha-400">Thêm danh mục</DialogTitle>
         </DialogHeader>
 
         <div className="flex gap-1.5">
@@ -65,6 +65,11 @@ export function AddCategoryModal({
             size="sm"
             variant={kind === "EXPENSE" ? "default" : "secondary"}
             onClick={() => setKind("EXPENSE")}
+            className={
+              kind === "EXPENSE"
+                ? "bg-kincha-400 text-ink-950 hover:bg-kincha-400/80"
+                : "bg-white/5 text-white/60 hover:bg-white/10"
+            }
           >
             Chi tiêu
           </Button>
@@ -73,6 +78,11 @@ export function AddCategoryModal({
             size="sm"
             variant={kind === "INCOME" ? "default" : "secondary"}
             onClick={() => setKind("INCOME")}
+            className={
+              kind === "INCOME"
+                ? "bg-kincha-400 text-ink-950 hover:bg-kincha-400/80"
+                : "bg-white/5 text-white/60 hover:bg-white/10"
+            }
           >
             Thu nhập
           </Button>
@@ -83,7 +93,7 @@ export function AddCategoryModal({
             value={icon}
             onChange={(e) => setIcon(e.target.value)}
             placeholder="🍜"
-            className="w-16 text-center"
+            className="w-16 text-center border-white/15 bg-white/5 text-white placeholder:text-white/30 focus-visible:border-kincha-400/50 focus-visible:ring-kincha-400/30"
             maxLength={4}
           />
           <Input
@@ -91,17 +101,17 @@ export function AddCategoryModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Tên danh mục (VD: Ăn uống)"
-            className="flex-1"
+            className="flex-1 border-white/15 bg-white/5 text-white placeholder:text-white/30 focus-visible:border-kincha-400/50 focus-visible:ring-kincha-400/30"
           />
         </div>
 
-        {error && <p className="text-[12px] text-accent-700">{error}</p>}
+        {error && <p className="text-[12px] text-shuiro-500">{error}</p>}
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
+        <DialogFooter className="border-white/10 bg-transparent">
+          <Button variant="ghost" onClick={onClose} className="text-white/60 hover:bg-white/10 hover:text-white">
             Huỷ
           </Button>
-          <Button onClick={submit} disabled={submitting}>
+          <Button onClick={submit} disabled={submitting} className="bg-kincha-400 text-ink-950 hover:bg-kincha-400/80">
             {submitting ? "Đang tạo..." : "Tạo danh mục"}
           </Button>
         </DialogFooter>

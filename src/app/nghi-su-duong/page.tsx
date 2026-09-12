@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import BackLink from "@/components/BackLink";
 import { ScrollCard, ProgressBar } from "@/components/tang-kinh-cac/ui";
 import { formatVND } from "@/lib/currency";
 
@@ -50,7 +49,12 @@ export default function NghiSuDuongHub() {
             Nghị Sự Đường
           </h1>
         </div>
-        <BackLink />
+        <Link
+          href="/"
+          className="rounded-sm border border-white/15 px-4 py-2 font-sans text-sm text-white/70 transition hover:border-kincha-400/50 hover:text-kincha-200"
+        >
+          ← Âm Dương Giới
+        </Link>
       </header>
 
       <main className="grid gap-5 px-6 py-4 sm:grid-cols-2 sm:px-10 lg:grid-cols-3">

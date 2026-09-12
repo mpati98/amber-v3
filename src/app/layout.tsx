@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter, Noto_Serif } from "next/font/google";
 import "./globals.css";
 import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider";
-import NavigationHistoryProvider from "@/components/NavigationHistoryProvider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -28,9 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${inter.variable} ${notoSerif.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-ink-950 font-sans" suppressHydrationWarning>
-        <AuthSessionProvider>
-          <NavigationHistoryProvider>{children}</NavigationHistoryProvider>
-        </AuthSessionProvider>
+        <AuthSessionProvider>{children}</AuthSessionProvider>
       </body>
     </html>
   );

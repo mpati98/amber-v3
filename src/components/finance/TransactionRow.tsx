@@ -21,26 +21,26 @@ export function TransactionRow({
   const date = new Date(transaction.occurredAt);
 
   return (
-    <div className="flex items-center justify-between py-2 border-b border-primary-100 last:border-0 group">
+    <div className="flex items-center justify-between py-2 border-b border-white/10 last:border-0 group">
       <div className="flex items-center gap-2 min-w-0">
         <span className="text-lg shrink-0">{transaction.category?.icon ?? (isIncome ? "💰" : "💸")}</span>
         <div className="min-w-0">
-          <p className="text-[13px] text-primary-900 truncate">
+          <p className="text-[13px] text-white truncate">
             {transaction.note || transaction.category?.name || (isIncome ? "Thu nhập" : "Chi tiêu")}
           </p>
-          <p className="text-[11px] text-text-secondary">
+          <p className="text-[11px] text-white/40">
             {transaction.account?.name} · {date.toLocaleDateString("vi-VN")}
           </p>
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <span className={`text-[13px] font-medium ${isIncome ? "text-primary-700" : "text-accent-700"}`}>
+        <span className={`text-[13px] font-medium ${isIncome ? "text-emerald-300" : "text-shuiro-500"}`}>
           {isIncome ? "+" : "−"}
           {formatVND(Number(transaction.amount))}
         </span>
         <button
           onClick={() => onDelete(transaction.id)}
-          className="opacity-0 group-hover:opacity-100 text-[11px] text-text-secondary hover:text-accent-700 transition-opacity"
+          className="opacity-0 group-hover:opacity-100 text-[11px] text-white/40 hover:text-shuiro-500 transition-opacity"
         >
           Xoá
         </button>

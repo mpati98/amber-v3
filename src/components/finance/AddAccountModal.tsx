@@ -67,9 +67,9 @@ export function AddAccountModal({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent>
+      <DialogContent className="dark border border-white/10 bg-ink-900">
         <DialogHeader>
-          <DialogTitle>Thêm ví</DialogTitle>
+          <DialogTitle className="font-serif-display text-lg text-kincha-400">Thêm ví</DialogTitle>
         </DialogHeader>
 
         <Input
@@ -77,6 +77,7 @@ export function AddAccountModal({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Tên ví (VD: Vietcombank, Momo)"
+          className="border-white/15 bg-white/5 text-white placeholder:text-white/30 focus-visible:border-kincha-400/50 focus-visible:ring-kincha-400/30"
         />
 
         <div className="flex flex-wrap gap-1.5">
@@ -87,6 +88,11 @@ export function AddAccountModal({
               size="sm"
               variant={type === t ? "default" : "secondary"}
               onClick={() => setType(t)}
+              className={
+                type === t
+                  ? "bg-kincha-400 text-ink-950 hover:bg-kincha-400/80"
+                  : "bg-white/5 text-white/60 hover:bg-white/10"
+              }
             >
               {TYPE_LABEL[t]}
             </Button>
@@ -98,15 +104,16 @@ export function AddAccountModal({
           onChange={(e) => setBalance(e.target.value.replace(/[^0-9]/g, ""))}
           placeholder="Số dư ban đầu (VND, để trống nếu = 0)"
           inputMode="numeric"
+          className="border-white/15 bg-white/5 text-white placeholder:text-white/30 focus-visible:border-kincha-400/50 focus-visible:ring-kincha-400/30"
         />
 
-        {error && <p className="text-[12px] text-accent-700">{error}</p>}
+        {error && <p className="text-[12px] text-shuiro-500">{error}</p>}
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
+        <DialogFooter className="border-white/10 bg-transparent">
+          <Button variant="ghost" onClick={onClose} className="text-white/60 hover:bg-white/10 hover:text-white">
             Huỷ
           </Button>
-          <Button onClick={submit} disabled={submitting}>
+          <Button onClick={submit} disabled={submitting} className="bg-kincha-400 text-ink-950 hover:bg-kincha-400/80">
             {submitting ? "Đang tạo..." : "Tạo ví"}
           </Button>
         </DialogFooter>

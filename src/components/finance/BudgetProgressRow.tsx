@@ -17,17 +17,17 @@ export function BudgetProgressRow({
   return (
     <div>
       <div className="flex items-center justify-between text-[12px] mb-1">
-        <span className="text-primary-900">
+        <span className="text-white">
           {icon ? `${icon} ` : ""}
           {name}
         </span>
-        <span className={over ? "text-accent-700 font-medium" : "text-text-secondary"}>
+        <span className={over ? "text-shuiro-500 font-medium" : "text-white/40"}>
           {formatVND(spent)} / {formatVND(limit)}
         </span>
       </div>
-      <div className="h-1.5 w-full rounded-full bg-primary-50 overflow-hidden">
+      <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
         <div
-          className={`h-full rounded-full ${over ? "bg-accent-700" : "bg-primary-500"}`}
+          className={`h-full rounded-full ${over ? "bg-shuiro-500" : "bg-kincha-400"}`}
           style={{ width: `${pct}%` }}
         />
       </div>

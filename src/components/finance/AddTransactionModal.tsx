@@ -9,7 +9,7 @@ type Account = { id: string; name: string };
 type Category = { id: string; name: string; icon: string | null; kind: "INCOME" | "EXPENSE" };
 
 const selectClass =
-  "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+  "h-8 w-full min-w-0 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-sm text-white outline-none focus-visible:border-kincha-400/50 focus-visible:ring-3 focus-visible:ring-kincha-400/30 [&_option]:bg-ink-900 [&_option]:text-white";
 
 export function AddTransactionModal({
   open,
@@ -90,9 +90,9 @@ export function AddTransactionModal({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent>
+      <DialogContent className="dark border border-white/10 bg-ink-900">
         <DialogHeader>
-          <DialogTitle>Thêm giao dịch</DialogTitle>
+          <DialogTitle className="font-serif-display text-lg text-kincha-400">Thêm giao dịch</DialogTitle>
         </DialogHeader>
 
         <div className="flex gap-1.5">
@@ -101,6 +101,11 @@ export function AddTransactionModal({
             size="sm"
             variant={kind === "EXPENSE" ? "default" : "secondary"}
             onClick={() => setKind("EXPENSE")}
+            className={
+              kind === "EXPENSE"
+                ? "bg-kincha-400 text-ink-950 hover:bg-kincha-400/80"
+                : "bg-white/5 text-white/60 hover:bg-white/10"
+            }
           >
             Chi tiêu
           </Button>
@@ -109,6 +114,11 @@ export function AddTransactionModal({
             size="sm"
             variant={kind === "INCOME" ? "default" : "secondary"}
             onClick={() => setKind("INCOME")}
+            className={
+              kind === "INCOME"
+                ? "bg-kincha-400 text-ink-950 hover:bg-kincha-400/80"
+                : "bg-white/5 text-white/60 hover:bg-white/10"
+            }
           >
             Thu nhập
           </Button>
@@ -120,6 +130,7 @@ export function AddTransactionModal({
           onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
           placeholder="Số tiền (VND)"
           inputMode="numeric"
+          className="border-white/15 bg-white/5 text-white placeholder:text-white/30 focus-visible:border-kincha-400/50 focus-visible:ring-kincha-400/30"
         />
 
         <div className="grid grid-cols-2 gap-2">
@@ -143,15 +154,20 @@ export function AddTransactionModal({
           </select>
         </div>
 
-        <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ghi chú (tuỳ chọn)" />
+        <Input
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Ghi chú (tuỳ chọn)"
+          className="border-white/15 bg-white/5 text-white placeholder:text-white/30 focus-visible:border-kincha-400/50 focus-visible:ring-kincha-400/30"
+        />
 
-        {error && <p className="text-[12px] text-accent-700">{error}</p>}
+        {error && <p className="text-[12px] text-shuiro-500">{error}</p>}
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
+        <DialogFooter className="border-white/10 bg-transparent">
+          <Button variant="ghost" onClick={onClose} className="text-white/60 hover:bg-white/10 hover:text-white">
             Huỷ
           </Button>
-          <Button onClick={submit} disabled={submitting}>
+          <Button onClick={submit} disabled={submitting} className="bg-kincha-400 text-ink-950 hover:bg-kincha-400/80">
             {submitting ? "Đang lưu..." : "Lưu giao dịch"}
           </Button>
         </DialogFooter>

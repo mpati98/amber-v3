@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { DayGrid } from "@/components/calendar/DayGrid";
 import { WeekGrid } from "@/components/calendar/WeekGrid";
 import { MonthGantt } from "@/components/calendar/MonthGantt";
 import { SupportingTasksGroup } from "@/components/calendar/SupportingTasksGroup";
 import { DailySummaryCharts } from "@/components/calendar/DailySummaryCharts";
+import { ProjectsDashboard } from "@/components/calendar/ProjectsDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollCard } from "@/components/tang-kinh-cac/ui";
 import {
@@ -17,10 +19,11 @@ import {
   mockWeekDays,
 } from "@/lib/mock-data";
 
-type ViewMode = "overview" | "today";
+type ViewMode = "dashboard" | "calendar" | "today";
 
 export default function StandardProjectsPage() {
-  const [view, setView] = useState<ViewMode>("overview");
+  const { data: session } = useSession();
+  const [view, setView] = useState<ViewMode>("dashboard");
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   const selectedDayData = mockWeekDays.find((d) => d.date === selectedDay) ?? null;
@@ -36,14 +39,20 @@ export default function StandardProjectsPage() {
       <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>
         <div className="mb-4 flex items-center justify-between">
           <h1 className="font-serif-display text-xl font-semibold tracking-wide text-white">
-            {view === "today" ? "Thứ 4, 26 thg 8" : "Tổng quan"}
+            {view === "today" ? "Thứ 4, 26 thg 8" : view === "calendar" ? "Lịch" : "Tổng quan"}
           </h1>
           <TabsList className="bg-white/5">
             <TabsTrigger
-              value="overview"
+              value="dashboard"
               className="text-white/50 data-active:bg-white/10 data-active:text-kincha-400"
             >
               Tổng quan
+            </TabsTrigger>
+            <TabsTrigger
+              value="calendar"
+              className="text-white/50 data-active:bg-white/10 data-active:text-kincha-400"
+            >
+              Lịch
             </TabsTrigger>
             <TabsTrigger
               value="today"
@@ -54,7 +63,11 @@ export default function StandardProjectsPage() {
           </TabsList>
         </div>
 
-        <TabsContent value="overview">
+        <TabsContent value="dashboard">
+          <ProjectsDashboard userName={session?.user?.name} />
+        </TabsContent>
+
+        <TabsContent value="calendar">
           <div className="flex flex-col gap-6">
             <ScrollCard glow="yugen">
               <div className="mb-3 flex items-center justify-between">

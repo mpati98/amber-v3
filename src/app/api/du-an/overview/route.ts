@@ -36,12 +36,13 @@ export async function GET(req: NextRequest) {
 
   const upcoming = active
     .filter((p) => p.startDate && p.startDate > today)
-    .sort((a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""))[0] ?? null;
+    .sort((a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""));
 
   return NextResponse.json({
     year,
     activeProjects: activeWithProgress,
     completedThisYear,
-    upcomingProject: upcoming ? { id: upcoming.id, name: upcoming.name, startDate: upcoming.startDate } : null,
+    upcomingProject: upcoming[0] ? { id: upcoming[0].id, name: upcoming[0].name, startDate: upcoming[0].startDate } : null,
+    upcomingProjects: upcoming.slice(0, 5).map((p) => ({ id: p.id, name: p.name, startDate: p.startDate, color: p.color })),
   });
 }

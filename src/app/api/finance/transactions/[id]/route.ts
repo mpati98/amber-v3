@@ -29,8 +29,12 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     await tx.delete(financeTransactions).where(eq(financeTransactions.id, id));
   });
 
-  logActivity(session.user.id, "finance_transactions", "delete", `Xóa giao dịch: ${id}`, {
-    transactionId: id,
+  logActivity({
+    userId: session.user.id,
+    source: "FINANCE",
+    action: "transaction.deleted",
+    title: `Xóa giao dịch: ${id}`,
+    metadata: { transactionId: id },
   });
 
   return NextResponse.json({ success: true });

@@ -36,9 +36,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   if (!updated) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
-  logActivity(session.user.id, "finance_accounts", "update", `Cập nhật tài khoản: ${updated.name}`, {
-    accountId: updated.id,
-    archived: archived ?? false,
+  logActivity({
+    userId: session.user.id,
+    source: "FINANCE",
+    action: "account.updated",
+    title: `Cập nhật tài khoản: ${updated.name}`,
+    metadata: { accountId: updated.id, archived: archived ?? false },
   });
 
   return NextResponse.json(updated);

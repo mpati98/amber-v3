@@ -52,9 +52,12 @@ export async function POST() {
     }
   });
 
-  logActivity(session.user.id, "feed_refresh", "sync", `Cập nhật tin tức: ${refreshed} thành công`, {
-    refreshed,
-    failed: failed.length,
+  logActivity({
+    userId: session.user.id,
+    source: "KIEU_LAU",
+    action: "feeds.refreshed",
+    title: `Cập nhật tin tức: ${refreshed} thành công`,
+    metadata: { refreshed, failedCount: failed.length },
   });
 
   return NextResponse.json({ refreshed, failed });

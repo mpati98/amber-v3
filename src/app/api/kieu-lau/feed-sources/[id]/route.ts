@@ -20,8 +20,12 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
-  logActivity(session.user.id, "feed_sources", "delete", `Xóa nguồn tin: ${deleted.name}`, {
-    sourceId: deleted.id,
+  logActivity({
+    userId: session.user.id,
+    source: "KIEU_LAU",
+    action: "feed_source.deleted",
+    title: `Xóa nguồn tin: ${deleted.name}`,
+    metadata: { sourceId: deleted.id },
   });
 
   return NextResponse.json({ ok: true });

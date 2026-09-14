@@ -42,9 +42,12 @@ export async function POST(req: NextRequest) {
     .values({ ...parsed.data, userId: session.user.id })
     .returning();
 
-  logActivity(session.user.id, "finance_categories", "create", `Tạo danh mục: ${created.name}`, {
-    categoryId: created.id,
-    kind: created.kind,
+  logActivity({
+    userId: session.user.id,
+    source: "FINANCE",
+    action: "category.created",
+    title: `Tạo danh mục: ${created.name}`,
+    metadata: { categoryId: created.id, kind: created.kind },
   });
 
   return NextResponse.json(created, { status: 201 });

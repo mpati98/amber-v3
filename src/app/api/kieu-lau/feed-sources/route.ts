@@ -41,9 +41,12 @@ export async function POST(req: NextRequest) {
     .values({ ...parsed.data, userId: session.user.id })
     .returning();
 
-  logActivity(session.user.id, "feed_sources", "create", `Thêm nguồn tin: ${created.name}`, {
-    sourceId: created.id,
-    url: created.url,
+  logActivity({
+    userId: session.user.id,
+    source: "KIEU_LAU",
+    action: "feed_source.created",
+    title: `Thêm nguồn tin: ${created.name}`,
+    metadata: { sourceId: created.id, url: created.url },
   });
 
   return NextResponse.json(created, { status: 201 });

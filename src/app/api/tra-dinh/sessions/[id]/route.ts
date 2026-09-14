@@ -127,9 +127,12 @@ Chỉ đánh giá những kỹ năng thực sự thể hiện rõ trong bản gh
     return { ...updatedProject, practiceDetails: updatedDetails };
   });
 
-  logActivity(userId, "practice_sessions", "close", `Kết thúc buổi: ${project.name}`, {
-    sessionId: result.id,
-    summary: evalResult?.summary ?? project.practiceDetails?.summary ?? undefined,
+  logActivity({
+    userId,
+    source: "TRA_DINH",
+    action: "session.closed",
+    title: `Kết thúc buổi: ${project.name}`,
+    metadata: { sessionId: result.id, summary: evalResult?.summary ?? project.practiceDetails?.summary ?? undefined },
   });
 
   return NextResponse.json(result);

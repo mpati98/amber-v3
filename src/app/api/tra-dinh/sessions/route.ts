@@ -63,9 +63,12 @@ export async function POST(req: NextRequest) {
     return { ...project, practiceDetails: details };
   });
 
-  logActivity(session.user.id, "practice_sessions", "create", `Bắt đầu buổi: ${result.name}`, {
-    sessionId: result.id,
-    mode: result.practiceDetails?.mode,
+  logActivity({
+    userId: session.user.id,
+    source: "TRA_DINH",
+    action: "session.created",
+    title: `Bắt đầu buổi: ${result.name}`,
+    metadata: { sessionId: result.id, mode: result.practiceDetails?.mode },
   });
 
   return NextResponse.json(result, { status: 201 });

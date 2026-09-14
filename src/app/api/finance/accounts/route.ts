@@ -43,9 +43,12 @@ export async function POST(req: NextRequest) {
     })
     .returning();
 
-  logActivity(session.user.id, "finance_accounts", "create", `Tạo tài khoản: ${created.name}`, {
-    accountId: created.id,
-    type: created.type,
+  logActivity({
+    userId: session.user.id,
+    source: "FINANCE",
+    action: "account.created",
+    title: `Tạo tài khoản: ${created.name}`,
+    metadata: { accountId: created.id, type: created.type },
   });
 
   return NextResponse.json(created, { status: 201 });

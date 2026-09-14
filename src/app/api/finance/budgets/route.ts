@@ -57,9 +57,12 @@ export async function POST(req: NextRequest) {
       .where(eq(financeBudgets.id, existing.id))
       .returning();
 
-    logActivity(session.user.id, "finance_budgets", "update", `Cập nhật ngân sách: ${limitAmount}`, {
-      budgetId: updated.id,
-      limitAmount: updated.limitAmount,
+    logActivity({
+      userId: session.user.id,
+      source: "FINANCE",
+      action: "budget.updated",
+      title: `Cập nhật ngân sách: ${limitAmount}`,
+      metadata: { budgetId: updated.id, limitAmount: updated.limitAmount },
     });
 
     return NextResponse.json(updated);
@@ -70,9 +73,12 @@ export async function POST(req: NextRequest) {
     .values({ projectId, categoryId, limitAmount: String(limitAmount), userId: session.user.id })
     .returning();
 
-  logActivity(session.user.id, "finance_budgets", "create", `Tạo ngân sách: ${limitAmount}`, {
-    budgetId: created.id,
-    limitAmount: created.limitAmount,
+  logActivity({
+    userId: session.user.id,
+    source: "FINANCE",
+    action: "budget.created",
+    title: `Tạo ngân sách: ${limitAmount}`,
+    metadata: { budgetId: created.id, limitAmount: created.limitAmount },
   });
 
   return NextResponse.json(created, { status: 201 });

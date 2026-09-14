@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { financeCategories } from "@/db/schema";
+import { logActivity } from "@/lib/activity-log";
 import { z } from "zod";
 
 const createCategorySchema = z.object({
@@ -40,5 +41,11 @@ export async function POST(req: NextRequest) {
     .insert(financeCategories)
     .values({ ...parsed.data, userId: session.user.id })
     .returning();
+
+  logActivity(session.user.id, "finance_categories", "create", `Tạo danh mục: ${created.name}`, {
+    categoryId: created.id,
+    kind: created.kind,
+  });
+
   return NextResponse.json(created, { status: 201 });
 }

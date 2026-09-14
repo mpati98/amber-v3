@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { financeAccounts, financeTransactions } from "@/db/schema";
+import { logActivity } from "@/lib/activity-log";
 import { eq, and, sql } from "drizzle-orm";
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -26,6 +27,10 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
       .where(eq(financeAccounts.id, existing.accountId));
 
     await tx.delete(financeTransactions).where(eq(financeTransactions.id, id));
+  });
+
+  logActivity(session.user.id, "finance_transactions", "delete", `Xóa giao dịch: ${id}`, {
+    transactionId: id,
   });
 
   return NextResponse.json({ success: true });

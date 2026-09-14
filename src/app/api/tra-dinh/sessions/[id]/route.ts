@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { projects, practiceSessionDetails, skillScores } from "@/db/schema";
+import { logActivity } from "@/lib/activity-log";
 import { eq, and } from "drizzle-orm";
 import { groqChatCompletion, parseJsonFromModel } from "@/lib/groq";
 import { SKILLS, type Skill } from "@/lib/skills";
@@ -124,6 +125,11 @@ Chỉ đánh giá những kỹ năng thực sự thể hiện rõ trong bản gh
     }
 
     return { ...updatedProject, practiceDetails: updatedDetails };
+  });
+
+  logActivity(userId, "practice_sessions", "close", `Kết thúc buổi: ${project.name}`, {
+    sessionId: result.id,
+    summary: evalResult?.summary ?? project.practiceDetails?.summary ?? undefined,
   });
 
   return NextResponse.json(result);

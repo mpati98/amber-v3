@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { financeAccounts } from "@/db/schema";
+import { logActivity } from "@/lib/activity-log";
 import { z } from "zod";
 
 const createAccountSchema = z.object({
@@ -41,5 +42,11 @@ export async function POST(req: NextRequest) {
       userId: session.user.id,
     })
     .returning();
+
+  logActivity(session.user.id, "finance_accounts", "create", `Tạo tài khoản: ${created.name}`, {
+    accountId: created.id,
+    type: created.type,
+  });
+
   return NextResponse.json(created, { status: 201 });
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { projects, practiceSessionDetails } from "@/db/schema";
+import { logActivity } from "@/lib/activity-log";
 import { z } from "zod";
 
 const createSessionSchema = z.object({
@@ -60,6 +61,11 @@ export async function POST(req: NextRequest) {
       .returning();
 
     return { ...project, practiceDetails: details };
+  });
+
+  logActivity(session.user.id, "practice_sessions", "create", `Bắt đầu buổi: ${result.name}`, {
+    sessionId: result.id,
+    mode: result.practiceDetails?.mode,
   });
 
   return NextResponse.json(result, { status: 201 });

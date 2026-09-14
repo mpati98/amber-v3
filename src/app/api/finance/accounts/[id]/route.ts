@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { financeAccounts } from "@/db/schema";
+import { logActivity } from "@/lib/activity-log";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 
@@ -34,5 +35,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .returning();
 
   if (!updated) return NextResponse.json({ error: "not_found" }, { status: 404 });
+
+  logActivity(session.user.id, "finance_accounts", "update", `Cập nhật tài khoản: ${updated.name}`, {
+    accountId: updated.id,
+    archived: archived ?? false,
+  });
+
   return NextResponse.json(updated);
 }

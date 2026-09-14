@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { feedSources, feedArticlesCache } from "@/db/schema";
+import { logActivity } from "@/lib/activity-log";
 import { eq } from "drizzle-orm";
 import Parser from "rss-parser";
 
@@ -49,6 +50,11 @@ export async function POST() {
     } else {
       failed.push(sources[i].name);
     }
+  });
+
+  logActivity(session.user.id, "feed_refresh", "sync", `Cập nhật tin tức: ${refreshed} thành công`, {
+    refreshed,
+    failed: failed.length,
   });
 
   return NextResponse.json({ refreshed, failed });

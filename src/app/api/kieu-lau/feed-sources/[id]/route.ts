@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { feedSources } from "@/db/schema";
+import { logActivity } from "@/lib/activity-log";
 import { and, eq } from "drizzle-orm";
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -18,5 +19,10 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!deleted) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
+
+  logActivity(session.user.id, "feed_sources", "delete", `Xóa nguồn tin: ${deleted.name}`, {
+    sourceId: deleted.id,
+  });
+
   return NextResponse.json({ ok: true });
 }

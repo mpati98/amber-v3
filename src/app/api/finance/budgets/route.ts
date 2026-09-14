@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { financeBudgets } from "@/db/schema";
+import { logActivity } from "@/lib/activity-log";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 
@@ -55,6 +56,12 @@ export async function POST(req: NextRequest) {
       .set({ limitAmount: String(limitAmount) })
       .where(eq(financeBudgets.id, existing.id))
       .returning();
+
+    logActivity(session.user.id, "finance_budgets", "update", `Cập nhật ngân sách: ${limitAmount}`, {
+      budgetId: updated.id,
+      limitAmount: updated.limitAmount,
+    });
+
     return NextResponse.json(updated);
   }
 
@@ -62,5 +69,11 @@ export async function POST(req: NextRequest) {
     .insert(financeBudgets)
     .values({ projectId, categoryId, limitAmount: String(limitAmount), userId: session.user.id })
     .returning();
+
+  logActivity(session.user.id, "finance_budgets", "create", `Tạo ngân sách: ${limitAmount}`, {
+    budgetId: created.id,
+    limitAmount: created.limitAmount,
+  });
+
   return NextResponse.json(created, { status: 201 });
 }

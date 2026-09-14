@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { learnLessons } from "@/db/schema";
+import { logActivity } from "@/lib/activity-log";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -27,6 +28,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const [updated] = await db.update(learnLessons).set(parsed.data).where(eq(learnLessons.id, id)).returning();
   if (!updated) return NextResponse.json({ error: "not_found" }, { status: 404 });
+
+  logActivity(session.user.id, "learn_lessons", "update", `Cập nhật bài học: ${updated.title}`, {
+    lessonId: updated.id,
+    studiedAt: updated.studiedAt,
+  });
+
   return NextResponse.json(updated);
 }
 
@@ -37,6 +44,14 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   }
   const { id } = await params;
 
+  const deleted = await db.query.learnLessons.findFirst({ where: eq(learnLessons.id, id) });
   await db.delete(learnLessons).where(eq(learnLessons.id, id));
+
+  if (deleted) {
+    logActivity(session.user.id, "learn_lessons", "delete", `Xóa bài học: ${deleted.title}`, {
+      lessonId: deleted.id,
+    });
+  }
+
   return NextResponse.json({ success: true });
 }

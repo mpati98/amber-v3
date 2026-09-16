@@ -59,6 +59,17 @@ export default function TraDinhHub() {
         </Link>
       </header>
 
+      {skills && (
+        <div className="mb-4 flex justify-end">
+          <Link
+            href="/tra-dinh/placement-test"
+            className="rounded-sm border border-kincha-400/40 px-3 py-1.5 font-sans text-[12px] font-medium text-kincha-400 transition hover:bg-kincha-400/10"
+          >
+            {skills.some((s) => s.cefrLevel !== null || s.score !== null) ? "Làm lại bài test" : "Làm bài test đầu vào"}
+          </Link>
+        </div>
+      )}
+
       <ScrollCard glow="kincha" className="mb-6">
         <h2 className="mb-3 font-sans text-[12px] font-medium tracking-wide text-kincha-400">Trình độ theo kỹ năng</h2>
         {!skills ? (

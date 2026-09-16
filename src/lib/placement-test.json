@@ -1,0 +1,300 @@
+{
+  "testId": "placement-v1",
+  "title": "Bài kiểm tra tiếng Anh đầu vào",
+  "description": "Ước lượng trình độ CEFR ban đầu (A1-C1) cho 3 kỹ năng: Grammar, Vocabulary, Reading. Listening/Speaking sẽ test riêng qua hội thoại giọng nói khi Trà Đình có STT/TTS.",
+  "instructions": "Chọn đáp án đúng nhất cho mỗi câu. Không cần vội — làm hết khả năng, câu khó dần về cuối là bình thường.",
+
+  "grammarVocabulary": [
+    {
+      "id": "gv01",
+      "level": "A1",
+      "question": "She ___ a teacher.",
+      "options": ["is", "are", "am", "be"],
+      "answer": 0
+    },
+    {
+      "id": "gv02",
+      "level": "A1",
+      "question": "I have two ___.",
+      "options": ["child", "childs", "children", "childrens"],
+      "answer": 2
+    },
+    {
+      "id": "gv03",
+      "level": "A1",
+      "question": "They ___ to school every day.",
+      "options": ["goes", "go", "going", "went"],
+      "answer": 1
+    },
+    {
+      "id": "gv04",
+      "level": "A1",
+      "question": "This is ___ book.",
+      "options": ["I", "my", "me", "mine"],
+      "answer": 1
+    },
+    {
+      "id": "gv05",
+      "level": "A2",
+      "question": "He ___ football yesterday.",
+      "options": ["play", "plays", "played", "playing"],
+      "answer": 2
+    },
+    {
+      "id": "gv06",
+      "level": "A2",
+      "question": "There ___ a lot of people at the party.",
+      "options": ["was", "were", "is", "be"],
+      "answer": 1
+    },
+    {
+      "id": "gv07",
+      "level": "A2",
+      "question": "I ___ never been to Japan.",
+      "options": ["am", "have", "has", "had"],
+      "answer": 1
+    },
+    {
+      "id": "gv08",
+      "level": "A2",
+      "question": "Can you tell me ___ the station is?",
+      "options": ["where", "what", "who", "which"],
+      "answer": 0
+    },
+    {
+      "id": "gv09",
+      "level": "B1",
+      "question": "If it rains tomorrow, we ___ the picnic.",
+      "options": ["cancel", "will cancel", "cancelled", "would cancel"],
+      "answer": 1
+    },
+    {
+      "id": "gv10",
+      "level": "B1",
+      "question": "By the time she arrived, the meeting ___ already ___.",
+      "options": [
+        "has / started",
+        "had / started",
+        "was / starting",
+        "have / started"
+      ],
+      "answer": 1
+    },
+    {
+      "id": "gv11",
+      "level": "B1",
+      "question": "The report ___ by the team next week.",
+      "options": [
+        "will finish",
+        "will be finished",
+        "is finishing",
+        "finishes"
+      ],
+      "answer": 1
+    },
+    {
+      "id": "gv12",
+      "level": "B1",
+      "question": "She's the person ___ car was stolen last night.",
+      "options": ["who", "which", "whose", "whom"],
+      "answer": 2
+    },
+    {
+      "id": "gv13",
+      "level": "B1",
+      "question": "I'm not used to ___ up so early.",
+      "options": ["get", "got", "getting", "have got"],
+      "answer": 2
+    },
+    {
+      "id": "gv14",
+      "level": "B2",
+      "question": "Hardly ___ the door when the phone rang.",
+      "options": ["I had opened", "had I opened", "I opened", "did I open"],
+      "answer": 1
+    },
+    {
+      "id": "gv15",
+      "level": "B2",
+      "question": "The company's profits have ___ significantly over the past year.",
+      "options": ["risen", "rose", "raised", "rise"],
+      "answer": 0
+    },
+    {
+      "id": "gv16",
+      "level": "B2",
+      "question": "I wish I ___ more time to prepare for the exam.",
+      "options": ["have", "had", "had had", "would have"],
+      "answer": 1
+    },
+    {
+      "id": "gv17",
+      "level": "B2",
+      "question": "It's high time we ___ a decision about this.",
+      "options": ["make", "made", "will make", "have made"],
+      "answer": 1
+    },
+    {
+      "id": "gv18",
+      "level": "B2",
+      "question": "The new policy has drawn ___ criticism from employees.",
+      "options": ["widespread", "wide", "broad", "large"],
+      "answer": 0
+    },
+    {
+      "id": "gv19",
+      "level": "C1",
+      "question": "Not only ___ late, but he also forgot the documents.",
+      "options": ["he was", "was he", "he did arrive", "did he arrived"],
+      "answer": 1
+    },
+    {
+      "id": "gv20",
+      "level": "C1",
+      "question": "She spoke so ___ that nobody dared to interrupt her.",
+      "options": ["assertive", "assertively", "assertion", "assert"],
+      "answer": 1
+    },
+    {
+      "id": "gv21",
+      "level": "C1",
+      "question": "The negotiations broke down owing to ___ differences between the two parties.",
+      "options": [
+        "irreconcilable",
+        "unreconciled",
+        "reconcilable",
+        "disreconciled"
+      ],
+      "answer": 0
+    },
+    {
+      "id": "gv22",
+      "level": "C1",
+      "question": "Were it not for his intervention, the deal ___ through.",
+      "options": [
+        "wouldn't go",
+        "wouldn't have gone",
+        "hadn't gone",
+        "didn't go"
+      ],
+      "answer": 1
+    },
+    {
+      "id": "gv23",
+      "level": "C1",
+      "question": "His argument, while superficially convincing, ___ scrutiny.",
+      "options": [
+        "doesn't hold up to",
+        "doesn't hold up under",
+        "isn't holding on",
+        "doesn't hold on"
+      ],
+      "answer": 1
+    },
+    {
+      "id": "gv24",
+      "level": "C1",
+      "question": "The committee's decision was met with ___ approval from all sides.",
+      "options": ["unanimous", "unanimously", "unanimity", "unison"],
+      "answer": 0
+    },
+    {
+      "id": "gv25",
+      "level": "C1",
+      "question": "Choose the closest synonym for \"meticulous\":",
+      "options": ["careless", "thorough", "quick", "vague"],
+      "answer": 1
+    }
+  ],
+
+  "reading": {
+    "passage": "Remote work has changed how many companies think about office space. A decade ago, most businesses assumed that employees needed to be physically present to collaborate effectively. Today, that assumption is being questioned. Some companies have shrunk their offices dramatically, arguing that video calls and shared documents can replace most in-person meetings. Others have taken the opposite approach, investing heavily in office spaces designed to make the commute worthwhile — think gyms, free meals, and quiet pods for focused work. Critics of remote work point to a decline in spontaneous conversation, the kind that happens when two colleagues bump into each other near the coffee machine and end up solving a problem neither had scheduled time to discuss. Supporters counter that this romanticizes a workplace culture that was never as productive as nostalgia suggests, and that employees who no longer waste hours commuting report higher job satisfaction. The debate is unlikely to be settled soon, partly because the answer may simply depend on the type of work being done.",
+    "questions": [
+      {
+        "id": "r01",
+        "question": "According to the passage, what did most companies assume a decade ago?",
+        "options": [
+          "Employees preferred working from home",
+          "Physical presence was necessary for effective collaboration",
+          "Office space was too expensive",
+          "Video calls were more productive than meetings"
+        ],
+        "answer": 1
+      },
+      {
+        "id": "r02",
+        "question": "Why have some companies invested in gyms and free meals?",
+        "options": [
+          "To reduce employee salaries",
+          "To make commuting to the office feel worthwhile",
+          "To compete with remote-only companies",
+          "Because employees demanded it in a survey"
+        ],
+        "answer": 1
+      },
+      {
+        "id": "r03",
+        "question": "What do critics of remote work say is lost?",
+        "options": [
+          "Employee salaries",
+          "Formal scheduled meetings",
+          "Spontaneous conversations between colleagues",
+          "Access to shared documents"
+        ],
+        "answer": 2
+      },
+      {
+        "id": "r04",
+        "question": "What is the supporters' counterargument, according to the passage?",
+        "options": [
+          "Office culture was never as productive as people remember it being",
+          "Remote work is always more productive",
+          "Commuting is good for employee health",
+          "Spontaneous conversations rarely lead to solutions"
+        ],
+        "answer": 0
+      },
+      {
+        "id": "r05",
+        "question": "What does the passage suggest about resolving this debate?",
+        "options": [
+          "It will be resolved once remote work becomes standard everywhere",
+          "The answer may depend on the type of work involved",
+          "Most companies have already reached a consensus",
+          "The debate is purely about cost, not culture"
+        ],
+        "answer": 1
+      }
+    ]
+  },
+
+  "writing": {
+    "prompt": "Viết đoạn văn 100-150 từ (tiếng Anh) trả lời: \"Do you think remote work makes people more or less productive? Give at least one reason.\"",
+    "note": "Không có đáp án cố định — chấm bằng AI (Groq LLM) dựa trên tiêu chí: ngữ pháp, từ vựng, mạch lạc, độ dài đủ yêu cầu. Xem gợi ý rubric bên dưới."
+  },
+
+  "scoring": {
+    "grammarVocabulary": {
+      "totalQuestions": 25,
+      "bands": [
+        { "minCorrect": 0, "maxCorrect": 4, "cefr": "A1" },
+        { "minCorrect": 5, "maxCorrect": 8, "cefr": "A2" },
+        { "minCorrect": 9, "maxCorrect": 13, "cefr": "B1" },
+        { "minCorrect": 14, "maxCorrect": 18, "cefr": "B2" },
+        { "minCorrect": 19, "maxCorrect": 22, "cefr": "C1" },
+        { "minCorrect": 23, "maxCorrect": 25, "cefr": "C2" }
+      ]
+    },
+    "reading": {
+      "totalQuestions": 5,
+      "bands": [
+        { "minCorrect": 0, "maxCorrect": 1, "cefr": "A2" },
+        { "minCorrect": 2, "maxCorrect": 2, "cefr": "B1" },
+        { "minCorrect": 3, "maxCorrect": 3, "cefr": "B2" },
+        { "minCorrect": 4, "maxCorrect": 4, "cefr": "C1" },
+        { "minCorrect": 5, "maxCorrect": 5, "cefr": "C2" }
+      ]
+    },
+    "note": "grammarVocabulary thực chất trộn 2 kỹ năng (grammar + vocabulary) vì khó tách hoàn toàn ở dạng trắc nghiệm. Tạm thời dùng CHUNG 1 điểm CEFR cho cả 2 skillScores (skill=GRAMMAR và skill=VOCABULARY) — phân tách chính xác hơn sẽ dựa vào biểu hiện thực tế trong hội thoại luyện tập sau này, không chỉ bài test 1 lần."
+  }
+}

@@ -5,7 +5,6 @@ const PUBLIC_PATHS = [
   "/login",
   "/register",
   "/api/auth", // bao gồm cả /api/auth/register và các route của next-auth
-  "/api/telegram/webhook", // Telegram gọi vào, không có session — tự verify bằng secret token riêng
   "/api/health",
   // next/image tự gọi lại route nội bộ (không kèm cookie) để tối ưu ảnh local,
   // nên assets tĩnh phải public — chặn ở đây sẽ làm mọi ảnh trong scene vỡ ảnh.

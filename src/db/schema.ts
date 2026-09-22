@@ -1,5 +1,14 @@
 import { relations } from "drizzle-orm";
-import { boolean, date, integer, jsonb, numeric, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { boolean, date, integer, jsonb, numeric, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
+
+// Enum đổi tên từ "DocumentType" (Prisma) sang "document_type" — 5 giá trị
+// giữ nguyên thứ tự thật trong DB.
+export const documentType = pgEnum("document_type", ["TEXT", "CHECKLIST", "MINDMAP", "IMAGE", "FILE"]);
+
+// Enum đổi tên từ "PublicationFormat"/"PublicationStatus" (Prisma) sang
+// snake_case — giá trị giữ nguyên thứ tự thật trong DB.
+export const publicationFormat = pgEnum("publication_format", ["PHYSICAL", "EBOOK", "AUDIOBOOK"]);
+export const publicationStatus = pgEnum("publication_status", ["TO_READ", "READING", "READ", "ABANDONED"]);
 
 // ============================================================
 // Bảng (định nghĩa hết trước — mọi relations() dồn xuống cuối file
@@ -225,6 +234,104 @@ export const feedArticlesCache = pgTable("feed_articles_cache", {
   fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// ===== Tàng Kinh Các — Giai đoạn 1 gộp Prisma→Drizzle (Topic trước, đơn giản nhất) =====
+
+// Bảng đổi tên từ "Topic" (Prisma) sang "topics" — id giữ kiểu text (cuid cũ,
+// không default ở DB, Prisma sinh id ở app code) để tương thích dữ liệu hiện có,
+// KHÔNG dùng uuid().defaultRandom() như các bảng Drizzle khác.
+export const topics = pgTable(
+  "topics",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    description: text("description"),
+  },
+  (table) => [
+    // Vật lý là 1 UNIQUE INDEX thuần (Prisma tạo qua CREATE UNIQUE INDEX, không
+    // phải UNIQUE CONSTRAINT) — dùng uniqueIndex() thay vì .unique() trên cột để
+    // khớp đúng structure thật, tránh drizzle-kit generate báo diff giả sau này.
+    uniqueIndex("topics_name_unique").on(table.name),
+  ]
+);
+
+// Bảng đổi tên từ "ReadingGoal" (Prisma) sang "reading_goals" — id giữ kiểu
+// text (cuid cũ, không default ở DB) như topics.
+export const readingGoals = pgTable(
+  "reading_goals",
+  {
+    id: text("id").primaryKey(),
+    year: integer("year").notNull(),
+    targetBooks: integer("targetBooks"),
+    targetPages: integer("targetPages"),
+    note: text("note"),
+  },
+  (table) => [
+    // "ReadingGoal_year_key" cũng là UNIQUE INDEX thuần, không phải constraint
+    // — bài học giống hệt topics.name.
+    uniqueIndex("reading_goals_year_unique").on(table.year),
+  ]
+);
+
+// Bảng đổi tên từ "Document" (Prisma) sang "documents" — id giữ kiểu text
+// (cuid cũ, không default ở DB). createdAt/updatedAt là timestamp KHÔNG có
+// timezone (khác mọi bảng Drizzle khác trong file — giữ nguyên đúng vật lý,
+// không tự thêm withTimezone). tags là cột text chứa chuỗi JSON, không phải
+// json/jsonb thật. topicId FK có ON UPDATE CASCADE thật ở DB (Prisma default
+// codegen) nên khai rõ onUpdate ở đây, khác các FK khác trong file (vốn do
+// chính Drizzle tạo, không có ON UPDATE CASCADE).
+export const documents = pgTable("documents", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  type: documentType("type").notNull().default("TEXT"),
+  content: text("content"),
+  attachmentUrl: text("attachmentUrl"),
+  tags: text("tags").notNull().default("[]"),
+  pinned: boolean("pinned").notNull().default(false),
+  sourceUrl: text("sourceUrl"),
+  topicId: text("topicId").references(() => topics.id, { onDelete: "set null", onUpdate: "cascade" }),
+  createdAt: timestamp("createdAt", { mode: "string" }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { mode: "string" }).notNull(),
+});
+
+// Bảng đổi tên từ "Publication" (Prisma) sang "publications" — id giữ kiểu
+// text (cuid cũ, không default ở DB). Timestamp KHÔNG có timezone, giống
+// documents (đã kiểm tra lại riêng, không giả định). "rating" không có
+// CHECK constraint ở DB — validate 1-5 (nếu có) chỉ ở tầng ứng dụng, nên
+// khai integer() thường, không ràng buộc range ở schema.
+export const publications = pgTable("publications", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  author: text("author"),
+  isbn: text("isbn"),
+  coverUrl: text("coverUrl"),
+  format: publicationFormat("format").notNull().default("PHYSICAL"),
+  status: publicationStatus("status").notNull().default("TO_READ"),
+  rating: integer("rating"),
+  currentPage: integer("currentPage"),
+  totalPages: integer("totalPages"),
+  tags: text("tags").notNull().default("[]"),
+  url: text("url"),
+  review: text("review"),
+  notes: text("notes"),
+  dateAdded: timestamp("dateAdded", { mode: "string" }).notNull().defaultNow(),
+  dateStarted: timestamp("dateStarted", { mode: "string" }),
+  dateFinished: timestamp("dateFinished", { mode: "string" }),
+});
+
+// Bảng đổi tên từ "Highlight" (Prisma) sang "highlights" — publicationId
+// BẮT BUỘC (khác documents.topicId nullable), FK có ON DELETE CASCADE thật
+// ở DB (xóa publication sẽ xóa luôn highlight của nó, không phải SET NULL).
+export const highlights = pgTable("highlights", {
+  id: text("id").primaryKey(),
+  publicationId: text("publicationId")
+    .notNull()
+    .references(() => publications.id, { onDelete: "cascade", onUpdate: "cascade" }),
+  quote: text("quote").notNull(),
+  page: integer("page"),
+  note: text("note"),
+  createdAt: timestamp("createdAt", { mode: "string" }).notNull().defaultNow(),
+});
+
 // ============================================================
 // Relations — đặt sau CÙNG, sau khi mọi bảng đã được định nghĩa,
 // để tránh lỗi "Cannot access 'X' before initialization" lúc runtime.
@@ -320,4 +427,20 @@ export const feedSourcesRelations = relations(feedSources, ({ many }) => ({
 
 export const feedArticlesCacheRelations = relations(feedArticlesCache, ({ one }) => ({
   source: one(feedSources, { fields: [feedArticlesCache.sourceId], references: [feedSources.id] }),
+}));
+
+export const topicsRelations = relations(topics, ({ many }) => ({
+  documents: many(documents),
+}));
+
+export const documentsRelations = relations(documents, ({ one }) => ({
+  topic: one(topics, { fields: [documents.topicId], references: [topics.id] }),
+}));
+
+export const publicationsRelations = relations(publications, ({ many }) => ({
+  highlights: many(highlights),
+}));
+
+export const highlightsRelations = relations(highlights, ({ one }) => ({
+  publication: one(publications, { fields: [highlights.publicationId], references: [publications.id] }),
 }));

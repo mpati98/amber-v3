@@ -1,5 +1,8 @@
+import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { and, desc, eq, like, or } from "drizzle-orm";
+import { db } from "@/db";
+import { publications, publicationFormat, publicationStatus } from "@/db/schema";
 import { parseTags, stringifyTags } from "@/lib/tags";
 import { withApiError } from "@/lib/apiError";
 
@@ -9,15 +12,15 @@ export const GET = withApiError(async (req: NextRequest) => {
   const format = searchParams.get("format");
   const search = searchParams.get("search");
 
-  const items = await prisma.publication.findMany({
-    where: {
-      ...(status ? { status: status as any } : {}),
-      ...(format ? { format: format as any } : {}),
-      ...(search
-        ? { OR: [{ title: { contains: search } }, { author: { contains: search } }] }
-        : {}),
-    },
-    orderBy: { dateAdded: "desc" },
+  const conditions = [
+    status ? eq(publications.status, status as (typeof publicationStatus.enumValues)[number]) : undefined,
+    format ? eq(publications.format, format as (typeof publicationFormat.enumValues)[number]) : undefined,
+    search ? or(like(publications.title, `%${search}%`), like(publications.author, `%${search}%`)) : undefined,
+  ].filter((c): c is NonNullable<typeof c> => c !== undefined);
+
+  const items = await db.query.publications.findMany({
+    where: conditions.length > 0 ? and(...conditions) : undefined,
+    orderBy: desc(publications.dateAdded),
   });
 
   return NextResponse.json(items.map((item) => ({ ...item, tags: parseTags(item.tags) })));
@@ -31,22 +34,25 @@ export const POST = withApiError(async (req: NextRequest) => {
     return NextResponse.json({ error: "title is required" }, { status: 400 });
   }
 
-  const item = await prisma.publication.create({
-    data: {
+  // ID mới dùng UUID, dữ liệu cũ có thể còn dạng cuid từ Prisma — không ảnh hưởng vì cột là text
+  const [created] = await db
+    .insert(publications)
+    .values({
+      id: randomUUID(),
       title,
       author: author || null,
       isbn: isbn || null,
       coverUrl: coverUrl || null,
-      format: format || "PHYSICAL",
-      status: status || "TO_READ",
+      format: (format || "PHYSICAL") as (typeof publicationFormat.enumValues)[number],
+      status: (status || "TO_READ") as (typeof publicationStatus.enumValues)[number],
       tags: stringifyTags(tags || []),
       url: url || null,
       review: review || null,
       notes: notes || null,
       totalPages: totalPages ?? null,
-      dateStarted: status === "READING" ? new Date() : null,
-    },
-  });
+      dateStarted: status === "READING" ? new Date().toISOString() : null,
+    })
+    .returning();
 
-  return NextResponse.json({ ...item, tags: parseTags(item.tags) });
+  return NextResponse.json({ ...created, tags: parseTags(created.tags) });
 });

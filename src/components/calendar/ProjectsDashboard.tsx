@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ScrollCard, ProgressBar } from "@/components/tang-kinh-cac/ui";
 import { TaskStatusBadge, ImportanceTag } from "@/components/calendar/TaskBadges";
+import { NewProjectModal } from "@/components/calendar/NewProjectModal";
+import { NewTaskModal } from "@/components/calendar/NewTaskModal";
 
 type Task = {
   id: string;
@@ -53,8 +55,11 @@ function StatCard({ value, label }: { value: string | number; label: string }) {
 export function ProjectsDashboard({ userName }: { userName?: string | null }) {
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [overview, setOverview] = useState<Overview | null>(null);
+  const [newProjectOpen, setNewProjectOpen] = useState(false);
+  const [newTaskProjectId, setNewTaskProjectId] = useState("");
+  const [taskModalProject, setTaskModalProject] = useState<{ id: string; name: string } | null>(null);
 
-  useEffect(() => {
+  const loadData = useCallback(() => {
     Promise.all([
       fetch("/api/tasks").then((r) => r.json()),
       fetch("/api/du-an/overview").then((r) => r.json()),
@@ -63,6 +68,10 @@ export function ProjectsDashboard({ userName }: { userName?: string | null }) {
       setOverview(overviewData);
     });
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const today = new Date().toISOString().slice(0, 10);
   const todayTasks = tasks?.filter((t) => t.startDate === today || t.dueDate === today) ?? [];
@@ -99,7 +108,35 @@ export function ProjectsDashboard({ userName }: { userName?: string | null }) {
 
       <div className="grid gap-4 sm:grid-cols-[1.3fr_1fr]">
         <ScrollCard glow="kincha">
-          <h2 className="mb-3 font-sans text-[12px] font-medium tracking-wide text-kincha-400">Task hôm nay</h2>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="font-sans text-[12px] font-medium tracking-wide text-kincha-400">Task hôm nay</h2>
+            {activeProjects.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={newTaskProjectId}
+                  onChange={(e) => setNewTaskProjectId(e.target.value)}
+                  className="rounded-sm border border-white/15 bg-white/5 px-1 py-0.5 font-sans text-[11px] text-white/70"
+                >
+                  <option value="">Chọn dự án...</option>
+                  {activeProjects.map((p) => (
+                    <option key={p.id} value={p.id} className="bg-ink-900">
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => {
+                    const project = activeProjects.find((p) => p.id === newTaskProjectId);
+                    if (project) setTaskModalProject({ id: project.id, name: project.name });
+                  }}
+                  disabled={!newTaskProjectId}
+                  className="shrink-0 font-sans text-[11px] text-kincha-400 hover:underline disabled:text-white/20 disabled:no-underline"
+                >
+                  + Thêm task
+                </button>
+              </div>
+            )}
+          </div>
           {tasks === null ? (
             <p className="font-sans text-[12px] text-white/40">Đang tải...</p>
           ) : todayTasks.length === 0 ? (
@@ -123,7 +160,15 @@ export function ProjectsDashboard({ userName }: { userName?: string | null }) {
 
         <div className="flex flex-col gap-4">
           <ScrollCard glow="yugen">
-            <h2 className="mb-3 font-sans text-[12px] font-medium tracking-wide text-kincha-400">Dự án đang chạy</h2>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 className="font-sans text-[12px] font-medium tracking-wide text-kincha-400">Dự án đang chạy</h2>
+              <button
+                onClick={() => setNewProjectOpen(true)}
+                className="shrink-0 font-sans text-[11px] text-kincha-400 hover:underline"
+              >
+                + Thêm dự án
+              </button>
+            </div>
             {overview === null ? (
               <p className="font-sans text-[12px] text-white/40">Đang tải...</p>
             ) : activeProjects.length === 0 ? (
@@ -166,6 +211,27 @@ export function ProjectsDashboard({ userName }: { userName?: string | null }) {
           </ScrollCard>
         </div>
       </div>
+
+      <NewProjectModal
+        open={newProjectOpen}
+        onClose={() => setNewProjectOpen(false)}
+        onCreated={() => loadData()}
+      />
+
+      {taskModalProject && (
+        <NewTaskModal
+          open={!!taskModalProject}
+          onClose={() => setTaskModalProject(null)}
+          projectId={taskModalProject.id}
+          projectName={taskModalProject.name}
+          startDate={today}
+          endDate={today}
+          onCreated={() => {
+            setNewTaskProjectId("");
+            loadData();
+          }}
+        />
+      )}
     </div>
   );
 }

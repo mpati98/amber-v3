@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { dayOfMonthToIso } from "../../lib/gantt-date";
 
 type CreatedTask = {
   id: string;
@@ -14,21 +13,29 @@ type CreatedTask = {
   dueDate: string;
 };
 
+function formatDateRange(startDate: string, endDate: string): string {
+  const fmt = (iso: string) => {
+    const [, m, d] = iso.split("-");
+    return `${d}/${m}`;
+  };
+  return startDate === endDate ? `Ngày ${fmt(startDate)}` : `Ngày ${fmt(startDate)} → ${fmt(endDate)}`;
+}
+
 export function NewTaskModal({
   open,
   onClose,
   projectId,
   projectName,
-  startDay,
-  endDay,
+  startDate,
+  endDate,
   onCreated,
 }: {
   open: boolean;
   onClose: () => void;
   projectId: string;
   projectName: string;
-  startDay: number;
-  endDay: number;
+  startDate: string; // ISO yyyy-MM-dd
+  endDate: string; // ISO yyyy-MM-dd
   onCreated: (task: CreatedTask) => void;
 }) {
   const [title, setTitle] = useState("");
@@ -61,8 +68,8 @@ export function NewTaskModal({
           title: title.trim(),
           importance,
           urgency: 2,
-          startDate: dayOfMonthToIso(startDay),
-          dueDate: dayOfMonthToIso(endDay),
+          startDate,
+          dueDate: endDate,
         }),
       });
       if (!res.ok) throw new Error("create failed");
@@ -93,9 +100,7 @@ export function NewTaskModal({
         />
 
         <div className="flex items-center justify-between">
-          <span className="text-[12px] text-white/40">
-            Ngày {startDay} → {endDay} thg 8
-          </span>
+          <span className="text-[12px] text-white/40">{formatDateRange(startDate, endDate)}</span>
           <div className="flex gap-1">
             {([3, 2, 1] as const).map((level) => (
               <Button

@@ -5,6 +5,7 @@ const PUBLIC_PATHS = [
   "/login",
   "/register",
   "/api/auth", // bao gồm cả /api/auth/register và các route của next-auth
+  "/api/mobile/auth", // login/refresh/logout cho Flutter — chưa có token thì mới cần gọi
   "/api/health",
   // next/image tự gọi lại route nội bộ (không kèm cookie) để tối ưu ảnh local,
   // nên assets tĩnh phải public — chặn ở đây sẽ làm mọi ảnh trong scene vỡ ảnh.

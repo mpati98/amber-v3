@@ -35,5 +35,6 @@ export default defineConfig({
     "documents",
     "publications",
     "highlights",
+    "refresh_tokens",
   ],
 });

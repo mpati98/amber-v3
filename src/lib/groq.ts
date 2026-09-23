@@ -1,17 +1,17 @@
 const GROQ_BASE_URL = "https://api.groq.com/openai/v1";
 
-// Model đã gọi thử trực tiếp GET /v1/models bằng chính GROQ_API_KEY của app này (2026-09) —
+// Model đã gọi thử trực tiếp GET /v1/models bằng chính GROQ_API_KEY của app này —
 // không chỉ tin theo doc, vì doc từng liệt kê "llama-3.3-70b-versatile" nhưng model đó trả về
 // 404 "does not exist or you do not have access to it" khi gọi thật với key hiện tại.
-// Danh sách model mà key này thực sự truy cập được: allam-2-7b, canopylabs/orpheus-*,
-// groq/compound(-mini), meta-llama/llama-prompt-guard-2-*, openai/gpt-oss-*, qwen/qwen3.x-27b,
-// whisper-large-v3(-turbo). Đã gọi thử từng model dưới đây (không chỉ dựa vào việc nó có trong
-// danh sách — canopylabs/orpheus-v1-english CÓ trong danh sách nhưng vẫn bị chặn bởi
-// "model_terms_required" cho tới khi org admin bấm chấp nhận điều khoản tại
-// console.groq.com/playground?model=canopylabs%2Forpheus-v1-english):
+// Cả 3 constant dưới đây đã gọi thử THẬT thành công, không chỉ dựa vào việc có trong /v1/models:
 // - openai/gpt-oss-120b: gọi thử OK (200), trả lời đúng, phù hợp hội thoại song ngữ.
 // - whisper-large-v3-turbo: gọi thử OK (200) với file audio thật.
-// - canopylabs/orpheus-v1-english: gọi thử bị 400 model_terms_required — XEM GHI CHÚ Ở groqSpeak().
+// - canopylabs/orpheus-v1-english: gọi thử /audio/speech OK (200), trả về WAV thật (voice: austin).
+//
+// Re-verify 2026-09-23: GET /v1/models trả về 11 model khả dụng cho key này (gồm đủ 3 model
+// trên). "groq/compound" và "groq/compound-mini" — có trong lần verify trước — đã BIẾN MẤT khỏi
+// danh sách lần này. Danh sách model Groq đổi theo thời gian: đừng tin comment cũ, chạy lại
+// GET /v1/models trước khi thêm/tin model nào ngoài 3 constant dưới đây.
 const CHAT_MODEL = "openai/gpt-oss-120b";
 const WHISPER_MODEL = "whisper-large-v3-turbo";
 const TTS_MODEL = "canopylabs/orpheus-v1-english";
@@ -64,9 +64,6 @@ export async function groqTranscribe(file: File): Promise<string> {
   return data.text as string;
 }
 
-// Sẽ trả 502 (qua route /api/tra-dinh/speak) cho tới khi org admin chấp nhận điều khoản
-// dùng model canopylabs/orpheus-v1-english tại console.groq.com/playground?model=canopylabs%2Forpheus-v1-english
-// — đây là hành động phải làm trên console Groq, không sửa được bằng code.
 export async function groqSpeak(text: string): Promise<{ audio: Buffer; contentType: string }> {
   const res = await fetch(`${GROQ_BASE_URL}/audio/speech`, {
     method: "POST",

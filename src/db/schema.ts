@@ -23,6 +23,22 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Refresh token cho Flutter/mobile JWT auth — mỗi row là 1 refresh token đã
+// hash (rotation: login/refresh tạo row mới, refresh cũ bị xóa ngay).
+export const refreshTokens = pgTable(
+  "refresh_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("refresh_tokens_token_hash_unique").on(table.tokenHash)]
+);
+
 export const projects = pgTable("projects", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
@@ -341,6 +357,10 @@ export const usersRelations = relations(users, ({ many }) => ({
   projects: many(projects),
   tasks: many(tasks),
   skillScores: many(skillScores),
+}));
+
+export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
+  user: one(users, { fields: [refreshTokens.userId], references: [users.id] }),
 }));
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({

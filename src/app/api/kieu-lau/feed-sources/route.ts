@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { feedSources } from "@/db/schema";
 import { logActivity } from "@/lib/activity-log";
@@ -11,25 +11,15 @@ const createFeedSourceSchema = z.object({
   url: z.string().url(),
 });
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth(async (_req, userId) => {
   const rows = await db.query.feedSources.findMany({
-    where: eq(feedSources.userId, session.user.id),
+    where: eq(feedSources.userId, userId),
     orderBy: (f, { desc }) => desc(f.createdAt),
   });
   return NextResponse.json(rows);
-}
+});
 
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (req, userId) => {
   const body = await req.json();
   const parsed = createFeedSourceSchema.safeParse(body);
   if (!parsed.success) {
@@ -38,11 +28,11 @@ export async function POST(req: NextRequest) {
 
   const [created] = await db
     .insert(feedSources)
-    .values({ ...parsed.data, userId: session.user.id })
+    .values({ ...parsed.data, userId })
     .returning();
 
   logActivity({
-    userId: session.user.id,
+    userId,
     source: "KIEU_LAU",
     action: "feed_source.created",
     title: `Thêm nguồn tin: ${created.name}`,
@@ -50,4 +40,4 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json(created, { status: 201 });
-}
+});

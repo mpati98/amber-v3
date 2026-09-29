@@ -12,10 +12,14 @@ const PUBLIC_PATHS = [
 ];
 
 export default auth((req) => {
-  // API của app Flutter xác thực bằng Bearer token, proxy chỉ biết cookie
-  // NextAuth nên không kiểm tra ở đây: MỖI route /api/mobile/* phải bọc
-  // withMobileRoute (lib/withMobileRoute.ts), trừ /api/mobile/auth/*.
-  if (req.nextUrl.pathname.startsWith("/api/mobile/")) {
+  // API gọi được từ app Flutter xác thực bằng Bearer token, proxy chỉ biết
+  // cookie NextAuth nên không kiểm tra ở đây. Mỗi route dưới các prefix này
+  // tự check qua withAuth (lib/withAuth.ts), hỗ trợ cả cookie web lẫn Bearer
+  // mobile — proxy KHÔNG còn là lớp chặn cho các path này, route nào quên bọc
+  // withAuth sẽ mở công khai. Ngoại lệ duy nhất: /api/mobile/auth/*.
+  // /api/kieu-lau/* dùng chung cho web + Flutter.
+  const { pathname } = req.nextUrl;
+  if (pathname.startsWith("/api/mobile/") || pathname.startsWith("/api/kieu-lau/")) {
     // Preflight CORS không kèm token. Header CORS do next.config.ts gắn vào.
     if (req.method === "OPTIONS") {
       return new NextResponse(null, { status: 204 });

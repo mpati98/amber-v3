@@ -1,27 +1,23 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { feedSources } from "@/db/schema";
 import { logActivity } from "@/lib/activity-log";
 import { and, eq } from "drizzle-orm";
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+export const DELETE = withAuth(async (_req, userId, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
 
   const [deleted] = await db
     .delete(feedSources)
-    .where(and(eq(feedSources.id, id), eq(feedSources.userId, session.user.id)))
+    .where(and(eq(feedSources.id, id), eq(feedSources.userId, userId)))
     .returning();
   if (!deleted) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
   logActivity({
-    userId: session.user.id,
+    userId,
     source: "KIEU_LAU",
     action: "feed_source.deleted",
     title: `Xóa nguồn tin: ${deleted.name}`,
@@ -29,4 +25,4 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   });
 
   return NextResponse.json({ ok: true });
-}
+});

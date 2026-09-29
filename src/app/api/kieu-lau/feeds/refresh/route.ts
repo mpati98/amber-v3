@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { feedSources, feedArticlesCache } from "@/db/schema";
 import { logActivity } from "@/lib/activity-log";
@@ -9,14 +9,9 @@ import Parser from "rss-parser";
 const parser = new Parser({ timeout: 10000 });
 const MAX_ITEMS_PER_SOURCE = 15;
 
-export async function POST() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (_req, userId) => {
   const sources = await db.query.feedSources.findMany({
-    where: eq(feedSources.userId, session.user.id),
+    where: eq(feedSources.userId, userId),
   });
 
   const failed: string[] = [];
@@ -53,7 +48,7 @@ export async function POST() {
   });
 
   logActivity({
-    userId: session.user.id,
+    userId,
     source: "KIEU_LAU",
     action: "feeds.refreshed",
     title: `Cập nhật tin tức: ${refreshed} thành công`,
@@ -61,4 +56,4 @@ export async function POST() {
   });
 
   return NextResponse.json({ refreshed, failed });
-}
+});

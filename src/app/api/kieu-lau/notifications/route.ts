@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { projects, tasks, financeTransactions, financeBudgets } from "@/db/schema";
 import { eq, and, ne, isNotNull, isNull, lte, sql } from "drizzle-orm";
@@ -29,12 +29,7 @@ function daysSince(isoDate: string, now: Date): number {
   return (now.getTime() - new Date(isoDate).getTime()) / (24 * 60 * 60 * 1000);
 }
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-  const userId = session.user.id;
+export const GET = withAuth(async (_req, userId) => {
   const now = new Date();
   const alerts: Alert[] = [];
 
@@ -129,4 +124,4 @@ export async function GET() {
   });
 
   return NextResponse.json({ alerts, recentActivity });
-}
+});

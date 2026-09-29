@@ -1,17 +1,12 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { feedSources } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth(async (_req, userId) => {
   const sources = await db.query.feedSources.findMany({
-    where: eq(feedSources.userId, session.user.id),
+    where: eq(feedSources.userId, userId),
     with: { articles: true },
   });
 
@@ -32,4 +27,4 @@ export async function GET() {
     });
 
   return NextResponse.json(articles);
-}
+});

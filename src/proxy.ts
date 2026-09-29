@@ -5,7 +5,6 @@ const PUBLIC_PATHS = [
   "/login",
   "/register",
   "/api/auth", // bao gồm cả /api/auth/register và các route của next-auth
-  "/api/mobile/auth", // login/refresh/logout cho Flutter — chưa có token thì mới cần gọi
   "/api/health",
   // next/image tự gọi lại route nội bộ (không kèm cookie) để tối ưu ảnh local,
   // nên assets tĩnh phải public — chặn ở đây sẽ làm mọi ảnh trong scene vỡ ảnh.
@@ -13,6 +12,17 @@ const PUBLIC_PATHS = [
 ];
 
 export default auth((req) => {
+  // API của app Flutter xác thực bằng Bearer token, proxy chỉ biết cookie
+  // NextAuth nên không kiểm tra ở đây: MỖI route /api/mobile/* phải bọc
+  // withMobileRoute (lib/withMobileRoute.ts), trừ /api/mobile/auth/*.
+  if (req.nextUrl.pathname.startsWith("/api/mobile/")) {
+    // Preflight CORS không kèm token. Header CORS do next.config.ts gắn vào.
+    if (req.method === "OPTIONS") {
+      return new NextResponse(null, { status: 204 });
+    }
+    return NextResponse.next();
+  }
+
   const isPublic = PUBLIC_PATHS.some((p) => req.nextUrl.pathname.startsWith(p));
   if (isPublic || req.auth) {
     return NextResponse.next();

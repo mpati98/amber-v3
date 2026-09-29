@@ -1,8 +1,8 @@
 import { put } from "@vercel/blob";
-import { NextRequest, NextResponse } from "next/server";
-import { withApiError } from "@/lib/apiError";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 
-export const POST = withApiError(async (req: NextRequest) => {
+export const POST = withAuth(async (req) => {
   const form = await req.formData();
   const file = form.get("file") as File | null;
   if (!file) return NextResponse.json({ error: "Thiếu file" }, { status: 400 });

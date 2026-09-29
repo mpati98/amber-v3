@@ -1,11 +1,11 @@
 import { randomUUID } from "crypto";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { asc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { documents, topics } from "@/db/schema";
-import { withApiError } from "@/lib/apiError";
+import { withAuth } from "@/lib/withAuth";
 
-export const GET = withApiError(async () => {
+export const GET = withAuth(async () => {
   const rows = await db
     .select({
       id: topics.id,
@@ -23,7 +23,7 @@ export const GET = withApiError(async () => {
   return NextResponse.json(rows);
 });
 
-export const POST = withApiError(async (req: NextRequest) => {
+export const POST = withAuth(async (req) => {
   const { name, description } = await req.json();
   if (!name?.trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });

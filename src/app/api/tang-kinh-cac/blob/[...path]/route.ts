@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { get } from "@vercel/blob";
-import { withApiError } from "@/lib/apiError";
+import { withAuth } from "@/lib/withAuth";
 
-export const GET = withApiError(async (_req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) => {
+export const GET = withAuth(async (_req, _userId, { params }: { params: Promise<{ path: string[] }> }) => {
   const { path } = await params;
   const pathname = path.join("/");
 

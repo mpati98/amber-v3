@@ -1,15 +1,15 @@
 import { randomUUID } from "crypto";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { and, desc, eq, like, or } from "drizzle-orm";
 import { db } from "@/db";
 import { documents, documentType } from "@/db/schema";
 import { parseTags, stringifyTags } from "@/lib/tags";
-import { withApiError } from "@/lib/apiError";
+import { withAuth } from "@/lib/withAuth";
 
 const CONTENT_TYPES = ["TEXT", "CHECKLIST", "MINDMAP"];
 const ATTACHMENT_TYPES = ["IMAGE", "FILE"];
 
-export const GET = withApiError(async (req: NextRequest) => {
+export const GET = withAuth(async (req) => {
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type");
   const topicId = searchParams.get("topicId");
@@ -32,7 +32,7 @@ export const GET = withApiError(async (req: NextRequest) => {
   return NextResponse.json(items.map((item) => ({ ...item, tags: parseTags(item.tags) })));
 });
 
-export const POST = withApiError(async (req: NextRequest) => {
+export const POST = withAuth(async (req) => {
   const body = await req.json();
   const { title, type, content, attachmentUrl, tags, pinned, sourceUrl, topicId } = body;
 

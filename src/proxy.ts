@@ -11,15 +11,18 @@ const PUBLIC_PATHS = [
   "/assets",
 ];
 
+// Prefix có route tự xác thực bằng withAuth — xem comment trong handler bên dưới.
+const SELF_AUTH_API_PREFIXES = ["/api/mobile/", "/api/kieu-lau/", "/api/tang-kinh-cac/"];
+
 export default auth((req) => {
   // API gọi được từ app Flutter xác thực bằng Bearer token, proxy chỉ biết
   // cookie NextAuth nên không kiểm tra ở đây. Mỗi route dưới các prefix này
   // tự check qua withAuth (lib/withAuth.ts), hỗ trợ cả cookie web lẫn Bearer
   // mobile — proxy KHÔNG còn là lớp chặn cho các path này, route nào quên bọc
   // withAuth sẽ mở công khai. Ngoại lệ duy nhất: /api/mobile/auth/*.
-  // /api/kieu-lau/* dùng chung cho web + Flutter.
+  // /api/kieu-lau/* và /api/tang-kinh-cac/* dùng chung cho web + Flutter.
   const { pathname } = req.nextUrl;
-  if (pathname.startsWith("/api/mobile/") || pathname.startsWith("/api/kieu-lau/")) {
+  if (SELF_AUTH_API_PREFIXES.some((p) => pathname.startsWith(p))) {
     // Preflight CORS không kèm token. Header CORS do next.config.ts gắn vào.
     if (req.method === "OPTIONS") {
       return new NextResponse(null, { status: 204 });

@@ -3,9 +3,9 @@ import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import { documents } from "@/db/schema";
 import { parseTags } from "@/lib/tags";
-import { withApiError } from "@/lib/apiError";
+import { withAuth } from "@/lib/withAuth";
 
-export const GET = withApiError(async () => {
+export const GET = withAuth(async () => {
   const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(documents);
   if (count === 0) return NextResponse.json(null);
 

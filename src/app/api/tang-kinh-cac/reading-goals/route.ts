@@ -1,16 +1,16 @@
 import { randomUUID } from "crypto";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { desc } from "drizzle-orm";
 import { db } from "@/db";
 import { readingGoals } from "@/db/schema";
-import { withApiError } from "@/lib/apiError";
+import { withAuth } from "@/lib/withAuth";
 
-export const GET = withApiError(async () => {
+export const GET = withAuth(async () => {
   const goals = await db.select().from(readingGoals).orderBy(desc(readingGoals.year));
   return NextResponse.json(goals);
 });
 
-export const POST = withApiError(async (req: NextRequest) => {
+export const POST = withAuth(async (req) => {
   const { year, targetBooks, targetPages, note } = await req.json();
   if (!year) return NextResponse.json({ error: "year is required" }, { status: 400 });
 

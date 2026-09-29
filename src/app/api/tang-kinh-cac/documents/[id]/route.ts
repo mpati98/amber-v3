@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { documents } from "@/db/schema";
 import { parseTags, stringifyTags } from "@/lib/tags";
-import { withApiError } from "@/lib/apiError";
+import { withAuth } from "@/lib/withAuth";
 
-export const PATCH = withApiError(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+export const PATCH = withAuth(async (req, _userId, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   const body = await req.json();
   const { title, content, attachmentUrl, tags, pinned, sourceUrl, topicId } = body;
@@ -40,7 +40,7 @@ export const PATCH = withApiError(async (req: NextRequest, { params }: { params:
   return NextResponse.json({ ...item!, tags: parseTags(item!.tags) });
 });
 
-export const DELETE = withApiError(async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+export const DELETE = withAuth(async (_req, _userId, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   const [deleted] = await db.delete(documents).where(eq(documents.id, id)).returning();
 

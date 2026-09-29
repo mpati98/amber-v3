@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { highlights } from "@/db/schema";
-import { withApiError } from "@/lib/apiError";
+import { withAuth } from "@/lib/withAuth";
 
-export const PATCH = withApiError(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+export const PATCH = withAuth(async (req, _userId, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   const { quote, page, note } = await req.json();
 
@@ -27,7 +27,7 @@ export const PATCH = withApiError(async (req: NextRequest, { params }: { params:
   return NextResponse.json(updated);
 });
 
-export const DELETE = withApiError(async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+export const DELETE = withAuth(async (_req, _userId, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   const [deleted] = await db.delete(highlights).where(eq(highlights.id, id)).returning();
 

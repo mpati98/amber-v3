@@ -1,12 +1,12 @@
 import { randomUUID } from "crypto";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { and, desc, eq, like, or } from "drizzle-orm";
 import { db } from "@/db";
 import { publications, publicationFormat, publicationStatus } from "@/db/schema";
 import { parseTags, stringifyTags } from "@/lib/tags";
-import { withApiError } from "@/lib/apiError";
+import { withAuth } from "@/lib/withAuth";
 
-export const GET = withApiError(async (req: NextRequest) => {
+export const GET = withAuth(async (req) => {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
   const format = searchParams.get("format");
@@ -26,7 +26,7 @@ export const GET = withApiError(async (req: NextRequest) => {
   return NextResponse.json(items.map((item) => ({ ...item, tags: parseTags(item.tags) })));
 });
 
-export const POST = withApiError(async (req: NextRequest) => {
+export const POST = withAuth(async (req) => {
   const body = await req.json();
   const { title, author, isbn, coverUrl, format, status, tags, url, review, notes, totalPages } = body;
 

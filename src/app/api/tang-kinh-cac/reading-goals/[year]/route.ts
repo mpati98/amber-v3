@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { and, eq, gte, lte } from "drizzle-orm";
 import { db } from "@/db";
 import { publications, readingGoals } from "@/db/schema";
-import { withApiError } from "@/lib/apiError";
+import { withAuth } from "@/lib/withAuth";
 
-export const GET = withApiError(async (_req: NextRequest, { params }: { params: Promise<{ year: string }> }) => {
+export const GET = withAuth(async (_req, _userId, { params }: { params: Promise<{ year: string }> }) => {
   const { year: yearParam } = await params;
   const year = Number(yearParam);
 

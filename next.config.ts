@@ -8,12 +8,13 @@ const mobileCorsHeaders = [
 
 const nextConfig: NextConfig = {
   // CORS chỉ cho API mà app Flutter gọi (cross-origin bằng Bearer token):
-  // /api/mobile/* và /api/kieu-lau/* (dùng chung web + Flutter).
+  // /api/mobile/*, /api/kieu-lau/* và /api/tang-kinh-cac/* (dùng chung web + Flutter).
   // Các route khác chỉ web gọi same-origin qua cookie, không cần CORS.
   async headers() {
     return [
       { source: "/api/mobile/:path*", headers: mobileCorsHeaders },
       { source: "/api/kieu-lau/:path*", headers: mobileCorsHeaders },
+      { source: "/api/tang-kinh-cac/:path*", headers: mobileCorsHeaders },
     ];
   },
 };

@@ -1,14 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
+import { vnYear } from "@/lib/vn-time";
 import { db } from "@/db";
 
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-  const userId = session.user.id;
-  const year = Number(req.nextUrl.searchParams.get("year") ?? new Date().getFullYear());
+export const GET = withAuth(async (req, userId) => {
+  const year = Number(req.nextUrl.searchParams.get("year") ?? vnYear());
 
   const courses = await db.query.projects.findMany({
     where: (p, { eq, and }) => and(eq(p.userId, userId), eq(p.type, "LEARN")),
@@ -21,7 +17,7 @@ export async function GET(req: NextRequest) {
     : null;
 
   const completedThisYear = courses.filter(
-    (c) => c.learnDetails?.status === "COMPLETED" && c.archivedAt && new Date(c.archivedAt).getFullYear() === year
+    (c) => c.learnDetails?.status === "COMPLETED" && c.archivedAt && vnYear(new Date(c.archivedAt)) === year
   ).length;
 
   const nextPlanned = courses
@@ -37,4 +33,4 @@ export async function GET(req: NextRequest) {
       : null,
     nextPlannedCourse: nextPlanned ? { id: nextPlanned.id, name: nextPlanned.name } : null,
   });
-}
+});

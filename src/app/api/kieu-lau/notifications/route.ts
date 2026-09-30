@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { projects, tasks, financeTransactions, financeBudgets } from "@/db/schema";
 import { eq, and, ne, isNotNull, isNull, lte, sql } from "drizzle-orm";
 import { formatVND } from "@/lib/currency";
+import { vnMonthBounds, vnToday } from "@/lib/vn-time";
 
 type Alert = {
   id: string;
@@ -12,14 +13,6 @@ type Alert = {
   detail?: string;
   href: string;
 };
-
-function toIsoDate(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
-function monthStart(date: Date): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
-}
 
 function addDays(date: Date, days: number): Date {
   return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
@@ -33,8 +26,11 @@ export const GET = withAuth(async (_req, userId) => {
   const now = new Date();
   const alerts: Alert[] = [];
 
+  // Mốc ngày/tháng theo lịch VN — server chạy UTC, 0h–7h sáng VN vẫn là "hôm qua".
+  const today = vnToday(now);
+
   // 1) Task sắp/đã trễ hạn (dueDate <= 3 ngày tới, chưa DONE)
-  const in3Days = toIsoDate(addDays(now, 3));
+  const in3Days = vnToday(addDays(now, 3));
   const dueTasks = await db.query.tasks.findMany({
     where: and(eq(tasks.userId, userId), ne(tasks.status, "DONE"), isNotNull(tasks.dueDate), lte(tasks.dueDate, in3Days)),
   });
@@ -49,13 +45,15 @@ export const GET = withAuth(async (_req, userId) => {
   }
 
   // 2) & 3) Project FINANCE tháng hiện tại — vượt ngân sách hoặc chưa bắt đầu tháng mới
-  const start = monthStart(now);
+  // Khớp đúng startDate mà POST /finance/projects tạo ra (cũng theo lịch VN).
+  const { start } = vnMonthBounds(now);
   const currentFinance = await db.query.projects.findFirst({
-    where: and(eq(projects.userId, userId), eq(projects.type, "FINANCE"), eq(projects.startDate, toIsoDate(start))),
+    where: and(eq(projects.userId, userId), eq(projects.type, "FINANCE"), eq(projects.startDate, start)),
   });
 
   if (!currentFinance) {
-    if (now.getUTCDate() > 3) {
+    // Cho 3 ngày đầu tháng (theo lịch VN) rồi mới nhắc.
+    if (Number(today.slice(8, 10)) > 3) {
       alerts.push({
         id: "finance:missing-month",
         kind: "FINANCE_MONTH_MISSING",

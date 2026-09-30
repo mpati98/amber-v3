@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { tasks } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { logActivity } from "@/lib/activity-log";
+import { userOwnsProject } from "@/lib/project-access";
 
 const patchTaskSchema = z.object({
   title: z.string().min(1).optional(),
@@ -20,12 +21,7 @@ const patchTaskSchema = z.object({
 
 type RouteParams = { params: Promise<{ id: string }> };
 
-export async function PATCH(req: NextRequest, { params }: RouteParams) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const PATCH = withAuth(async (req, userId, { params }: RouteParams) => {
   const { id } = await params;
   const body = await req.json();
   const parsed = patchTaskSchema.safeParse(body);
@@ -35,12 +31,16 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   if (Object.keys(parsed.data).length === 0) {
     return NextResponse.json({ error: "empty patch" }, { status: 400 });
   }
+  // Như POST: không cho chuyển task sang project của người khác (null = bỏ khỏi project, hợp lệ).
+  if (parsed.data.projectId && !(await userOwnsProject(parsed.data.projectId, userId))) {
+    return NextResponse.json({ error: "project_not_found" }, { status: 404 });
+  }
 
   // and(...) đảm bảo chỉ sửa được task của chính user đang đăng nhập, không đoán ID người khác được
   const [updated] = await db
     .update(tasks)
     .set(parsed.data)
-    .where(and(eq(tasks.id, id), eq(tasks.userId, session.user.id)))
+    .where(and(eq(tasks.id, id), eq(tasks.userId, userId)))
     .returning();
   if (!updated) {
     return NextResponse.json({ error: "task not found" }, { status: 404 });
@@ -48,7 +48,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
   if (parsed.data.status === "DONE") {
     await logActivity({
-      userId: session.user.id,
+      userId,
       source: "DU_AN",
       action: "task.completed",
       title: updated.title,
@@ -56,21 +56,16 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   }
 
   return NextResponse.json(updated);
-}
+});
 
-export async function DELETE(_req: NextRequest, { params }: RouteParams) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const DELETE = withAuth(async (_req, userId, { params }: RouteParams) => {
   const { id } = await params;
   const [deleted] = await db
     .delete(tasks)
-    .where(and(eq(tasks.id, id), eq(tasks.userId, session.user.id)))
+    .where(and(eq(tasks.id, id), eq(tasks.userId, userId)))
     .returning();
   if (!deleted) {
     return NextResponse.json({ error: "task not found" }, { status: 404 });
   }
   return NextResponse.json({ ok: true });
-}
+});

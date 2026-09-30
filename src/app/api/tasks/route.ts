@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { tasks } from "@/db/schema";
 import { z } from "zod";
 import { logActivity } from "@/lib/activity-log";
+import { userOwnsProject } from "@/lib/project-access";
 
 const createTaskSchema = z.object({
   projectId: z.string().uuid().optional(),
@@ -18,12 +19,7 @@ const createTaskSchema = z.object({
   prepLeadDays: z.number().int().optional(),
 });
 
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-  const userId = session.user.id;
+export const GET = withAuth(async (req, userId) => {
   const kind = req.nextUrl.searchParams.get("kind"); // "gantt" = chỉ task có startDate/dueDate, không lặp
 
   const rows = await db.query.tasks.findMany({
@@ -34,30 +30,30 @@ export async function GET(req: NextRequest) {
     with: { occurrences: true },
   });
   return NextResponse.json(rows);
-}
+});
 
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (req, userId) => {
   const body = await req.json();
   const parsed = createTaskSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
+  // Trước đây gắn được task vào project của người khác (task đó bị tính vào
+  // tiến độ dự án của họ trong du-an/overview).
+  if (parsed.data.projectId && !(await userOwnsProject(parsed.data.projectId, userId))) {
+    return NextResponse.json({ error: "project_not_found" }, { status: 404 });
+  }
   const [created] = await db
     .insert(tasks)
-    .values({ ...parsed.data, userId: session.user.id })
+    .values({ ...parsed.data, userId })
     .returning();
 
   await logActivity({
-    userId: session.user.id,
+    userId,
     source: "DU_AN",
     action: "task.created",
     title: created.title,
   });
 
   return NextResponse.json(created, { status: 201 });
-}
+});

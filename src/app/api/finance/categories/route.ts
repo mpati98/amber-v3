@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { financeCategories } from "@/db/schema";
 import { logActivity } from "@/lib/activity-log";
@@ -11,26 +11,17 @@ const createCategorySchema = z.object({
   kind: z.enum(["INCOME", "EXPENSE"]),
 });
 
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+export const GET = withAuth(async (req, userId) => {
   const kind = req.nextUrl.searchParams.get("kind");
 
   const rows = await db.query.financeCategories.findMany({
     where: (c, { eq, and }) =>
-      kind ? and(eq(c.userId, session.user.id), eq(c.kind, kind)) : eq(c.userId, session.user.id),
+      kind ? and(eq(c.userId, userId), eq(c.kind, kind)) : eq(c.userId, userId),
   });
   return NextResponse.json(rows);
-}
+});
 
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (req, userId) => {
   const body = await req.json();
   const parsed = createCategorySchema.safeParse(body);
   if (!parsed.success) {
@@ -39,11 +30,11 @@ export async function POST(req: NextRequest) {
 
   const [created] = await db
     .insert(financeCategories)
-    .values({ ...parsed.data, userId: session.user.id })
+    .values({ ...parsed.data, userId })
     .returning();
 
   logActivity({
-    userId: session.user.id,
+    userId,
     source: "FINANCE",
     action: "category.created",
     title: `Tạo danh mục: ${created.name}`,
@@ -51,4 +42,4 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json(created, { status: 201 });
-}
+});

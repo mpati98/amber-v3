@@ -1,15 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
+import { vnToday, vnYear } from "@/lib/vn-time";
 import { db } from "@/db";
 
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-  const userId = session.user.id;
-  const year = Number(req.nextUrl.searchParams.get("year") ?? new Date().getFullYear());
-  const today = new Date().toISOString().slice(0, 10);
+export const GET = withAuth(async (req, userId) => {
+  // Theo lịch VN — server chạy UTC, 0h–7h sáng VN vẫn là "hôm qua"/"năm ngoái".
+  const year = Number(req.nextUrl.searchParams.get("year") ?? vnYear());
+  const today = vnToday();
 
   const allProjects = await db.query.projects.findMany({
     where: (p, { eq, and }) => and(eq(p.userId, userId), eq(p.type, "STANDARD")),
@@ -31,7 +28,7 @@ export async function GET(req: NextRequest) {
   });
 
   const completedThisYear = allProjects.filter(
-    (p) => p.archivedAt && new Date(p.archivedAt).getFullYear() === year
+    (p) => p.archivedAt && vnYear(new Date(p.archivedAt)) === year
   ).length;
 
   const upcoming = active
@@ -45,4 +42,4 @@ export async function GET(req: NextRequest) {
     upcomingProject: upcoming[0] ? { id: upcoming[0].id, name: upcoming[0].name, startDate: upcoming[0].startDate } : null,
     upcomingProjects: upcoming.slice(0, 5).map((p) => ({ id: p.id, name: p.name, startDate: p.startDate, color: p.color })),
   });
-}
+});

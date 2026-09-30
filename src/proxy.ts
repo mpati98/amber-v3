@@ -12,7 +12,23 @@ const PUBLIC_PATHS = [
 ];
 
 // Prefix có route tự xác thực bằng withAuth — xem comment trong handler bên dưới.
-const SELF_AUTH_API_PREFIXES = ["/api/mobile/", "/api/kieu-lau/", "/api/tang-kinh-cac/"];
+// Không có "/" ở cuối: /api/projects và /api/tasks tự thân là route. Khớp đúng
+// prefix hoặc prefix + "/..." (không khớp nhầm kiểu /api/tasksxyz).
+const SELF_AUTH_API_PREFIXES = [
+  "/api/mobile",
+  "/api/kieu-lau",
+  "/api/tang-kinh-cac",
+  // Nghị Sự Đường (dự án, tài chính, học tập) — API không có prefix chung.
+  "/api/projects",
+  "/api/tasks",
+  "/api/du-an",
+  "/api/finance",
+  "/api/learn",
+];
+
+function isSelfAuthApi(pathname: string): boolean {
+  return SELF_AUTH_API_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
 
 export default auth((req) => {
   // API gọi được từ app Flutter xác thực bằng Bearer token, proxy chỉ biết
@@ -20,9 +36,8 @@ export default auth((req) => {
   // tự check qua withAuth (lib/withAuth.ts), hỗ trợ cả cookie web lẫn Bearer
   // mobile — proxy KHÔNG còn là lớp chặn cho các path này, route nào quên bọc
   // withAuth sẽ mở công khai. Ngoại lệ duy nhất: /api/mobile/auth/*.
-  // /api/kieu-lau/* và /api/tang-kinh-cac/* dùng chung cho web + Flutter.
-  const { pathname } = req.nextUrl;
-  if (SELF_AUTH_API_PREFIXES.some((p) => pathname.startsWith(p))) {
+  // Các prefix ngoài /api/mobile/* dùng chung cho web + Flutter.
+  if (isSelfAuthApi(req.nextUrl.pathname)) {
     // Preflight CORS không kèm token. Header CORS do next.config.ts gắn vào.
     if (req.method === "OPTIONS") {
       return new NextResponse(null, { status: 204 });

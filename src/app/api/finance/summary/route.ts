@@ -1,13 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-  const userId = session.user.id;
+export const GET = withAuth(async (req, userId) => {
   const projectId = req.nextUrl.searchParams.get("projectId");
   if (!projectId) {
     return NextResponse.json({ error: "projectId is required" }, { status: 400 });
@@ -62,4 +57,4 @@ export async function GET(req: NextRequest) {
     netThisMonth: totalIncome - totalExpense,
     budgetProgress,
   });
-}
+});

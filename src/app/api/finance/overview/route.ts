@@ -1,14 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
+import { vnYear } from "@/lib/vn-time";
 import { db } from "@/db";
 
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-  const userId = session.user.id;
-  const year = Number(req.nextUrl.searchParams.get("year") ?? new Date().getFullYear());
+export const GET = withAuth(async (req, userId) => {
+  const year = Number(req.nextUrl.searchParams.get("year") ?? vnYear());
 
   const financeProjects = await db.query.projects.findMany({
     where: (p, { eq, and, gte, lt }) =>
@@ -22,18 +18,26 @@ export async function GET(req: NextRequest) {
   });
 
   const projectIds = financeProjects.map((p) => p.id);
+  const hasProjects = projectIds.length > 0;
 
+  // Năm không có tháng tài chính nào → không có snapshot/giao dịch nào của năm
+  // đó. Trước đây nhánh rỗng rơi về: snapshot `where: undefined` (đọc snapshot
+  // của MỌI user) và giao dịch chỉ lọc userId (cộng giao dịch của MỌI năm).
   const [snapshots, accounts, yearTransactions] = await Promise.all([
-    db.query.financeBalanceSnapshots.findMany({
-      where: (s, { inArray }) => (projectIds.length ? inArray(s.projectId, projectIds) : undefined),
-    }),
+    hasProjects
+      ? db.query.financeBalanceSnapshots.findMany({
+          where: (s, { inArray }) => inArray(s.projectId, projectIds),
+        })
+      : [],
     db.query.financeAccounts.findMany({
       where: (a, { eq: eqOp, isNull, and: andOp }) => andOp(eqOp(a.userId, userId), isNull(a.archivedAt)),
     }),
-    db.query.financeTransactions.findMany({
-      where: (t, { eq: eqOp, inArray }) => (projectIds.length ? inArray(t.projectId, projectIds) : eqOp(t.userId, userId)),
-      with: { category: true },
-    }),
+    hasProjects
+      ? db.query.financeTransactions.findMany({
+          where: (t, { eq: eqOp, and: andOp, inArray }) => andOp(eqOp(t.userId, userId), inArray(t.projectId, projectIds)),
+          with: { category: true },
+        })
+      : [],
   ]);
 
   const snapshotByProject = new Map(snapshots.map((s) => [s.projectId, Number(s.totalBalance)]));
@@ -75,4 +79,4 @@ export async function GET(req: NextRequest) {
     activeProjectId: activeProject?.id ?? null,
     activeProjectName: activeProject?.name ?? null,
   });
-}
+});

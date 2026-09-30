@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { learnLessons } from "@/db/schema";
 import { logActivity } from "@/lib/activity-log";
+import { findOwnedLesson } from "@/lib/learn-access";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -13,12 +14,13 @@ const updateLessonSchema = z.object({
   note: z.string().optional(),
 });
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+export const PATCH = withAuth(async (req, userId, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
+  // Bài học phải thuộc khóa học của chính user — trước đây sửa được bài học
+  // của bất kỳ ai nếu biết id (không có điều kiện userId nào).
+  if (!(await findOwnedLesson(id, userId))) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
 
   const body = await req.json();
   const parsed = updateLessonSchema.safeParse(body);
@@ -30,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!updated) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
   logActivity({
-    userId: session.user.id,
+    userId,
     source: "LEARN",
     action: "lesson.updated",
     title: `Cập nhật bài học: ${updated.title}`,
@@ -38,27 +40,26 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   });
 
   return NextResponse.json(updated);
-}
+});
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+export const DELETE = withAuth(async (_req, userId, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
-
-  const deleted = await db.query.learnLessons.findFirst({ where: eq(learnLessons.id, id) });
-  await db.delete(learnLessons).where(eq(learnLessons.id, id));
-
-  if (deleted) {
-    logActivity({
-      userId: session.user.id,
-      source: "LEARN",
-      action: "lesson.deleted",
-      title: `Xóa bài học: ${deleted.title}`,
-      metadata: { lessonId: deleted.id },
-    });
+  // Như PATCH: trước đây xóa được bài học của bất kỳ ai. Giờ không tồn tại
+  // hoặc của người khác đều 404 (trước đây luôn trả success).
+  const lesson = await findOwnedLesson(id, userId);
+  if (!lesson) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
+
+  await db.delete(learnLessons).where(eq(learnLessons.id, lesson.id));
+
+  logActivity({
+    userId,
+    source: "LEARN",
+    action: "lesson.deleted",
+    title: `Xóa bài học: ${lesson.title}`,
+    metadata: { lessonId: lesson.id },
+  });
 
   return NextResponse.json({ success: true });
-}
+});

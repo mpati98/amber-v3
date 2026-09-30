@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { financeAccounts } from "@/db/schema";
 import { logActivity } from "@/lib/activity-log";
@@ -11,23 +11,14 @@ const createAccountSchema = z.object({
   currentBalance: z.number().default(0),
 });
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+export const GET = withAuth(async (_req, userId) => {
   const rows = await db.query.financeAccounts.findMany({
-    where: (a, { eq, isNull, and }) => and(eq(a.userId, session.user.id), isNull(a.archivedAt)),
+    where: (a, { eq, isNull, and }) => and(eq(a.userId, userId), isNull(a.archivedAt)),
   });
   return NextResponse.json(rows);
-}
+});
 
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (req, userId) => {
   const body = await req.json();
   const parsed = createAccountSchema.safeParse(body);
   if (!parsed.success) {
@@ -39,12 +30,12 @@ export async function POST(req: NextRequest) {
     .values({
       ...parsed.data,
       currentBalance: String(parsed.data.currentBalance),
-      userId: session.user.id,
+      userId,
     })
     .returning();
 
   logActivity({
-    userId: session.user.id,
+    userId,
     source: "FINANCE",
     action: "account.created",
     title: `Tạo tài khoản: ${created.name}`,
@@ -52,4 +43,4 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json(created, { status: 201 });
-}
+});

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { projects, learnCourseDetails } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -16,11 +16,7 @@ const updateCourseSchema = z.object({
   status: z.enum(["PLANNED", "IN_PROGRESS", "COMPLETED"]).optional(),
 });
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+export const PATCH = withAuth(async (req, userId, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
 
   const body = await req.json();
@@ -32,7 +28,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const result = await db.transaction(async (tx) => {
     const project = await tx.query.projects.findFirst({
-      where: and(eq(projects.id, id), eq(projects.userId, session.user.id), eq(projects.type, "LEARN")),
+      where: and(eq(projects.id, id), eq(projects.userId, userId), eq(projects.type, "LEARN")),
     });
     if (!project) return null;
 
@@ -66,7 +62,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   if (status === "COMPLETED") {
     await logActivity({
-      userId: session.user.id,
+      userId,
       source: "LEARN",
       action: "learn.course_completed",
       title: result.name,
@@ -74,15 +70,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   return NextResponse.json(result);
-}
+});
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+export const DELETE = withAuth(async (_req, userId, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
 
-  await db.delete(projects).where(and(eq(projects.id, id), eq(projects.userId, session.user.id), eq(projects.type, "LEARN")));
+  await db.delete(projects).where(and(eq(projects.id, id), eq(projects.userId, userId), eq(projects.type, "LEARN")));
   return NextResponse.json({ success: true });
-}
+});

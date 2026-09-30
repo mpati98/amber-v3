@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { financeAccounts } from "@/db/schema";
 import { logActivity } from "@/lib/activity-log";
@@ -11,11 +11,7 @@ const updateAccountSchema = z.object({
   archived: z.boolean().optional(),
 });
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+export const PATCH = withAuth(async (req, userId, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
 
   const body = await req.json();
@@ -31,13 +27,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       ...rest,
       ...(archived !== undefined ? { archivedAt: archived ? new Date() : null } : {}),
     })
-    .where(and(eq(financeAccounts.id, id), eq(financeAccounts.userId, session.user.id)))
+    .where(and(eq(financeAccounts.id, id), eq(financeAccounts.userId, userId)))
     .returning();
 
   if (!updated) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
   logActivity({
-    userId: session.user.id,
+    userId,
     source: "FINANCE",
     action: "account.updated",
     title: `Cập nhật tài khoản: ${updated.name}`,
@@ -45,4 +41,4 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   });
 
   return NextResponse.json(updated);
-}
+});

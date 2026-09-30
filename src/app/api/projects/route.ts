@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { projects } from "@/db/schema";
 import { z } from "zod";
@@ -12,28 +12,19 @@ const createProjectSchema = z.object({
   type: z.string().min(1).optional(),
 });
 
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+export const GET = withAuth(async (req, userId) => {
   const type = req.nextUrl.searchParams.get("type");
 
   const rows = await db.query.projects.findMany({
     where: (p, { eq, isNull, and }) =>
       type
-        ? and(eq(p.userId, session.user.id), isNull(p.archivedAt), eq(p.type, type))
-        : and(eq(p.userId, session.user.id), isNull(p.archivedAt)),
+        ? and(eq(p.userId, userId), isNull(p.archivedAt), eq(p.type, type))
+        : and(eq(p.userId, userId), isNull(p.archivedAt)),
   });
   return NextResponse.json(rows);
-}
+});
 
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (req, userId) => {
   const body = await req.json();
   const parsed = createProjectSchema.safeParse(body);
   if (!parsed.success) {
@@ -41,7 +32,7 @@ export async function POST(req: NextRequest) {
   }
   const [created] = await db
     .insert(projects)
-    .values({ ...parsed.data, userId: session.user.id })
+    .values({ ...parsed.data, userId })
     .returning();
   return NextResponse.json(created, { status: 201 });
-}
+});

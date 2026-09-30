@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { projects, learnCourseDetails } from "@/db/schema";
 import { z } from "zod";
@@ -14,26 +14,16 @@ const createCourseSchema = z.object({
   status: z.enum(["PLANNED", "IN_PROGRESS", "COMPLETED"]).default("PLANNED"),
 });
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth(async (_req, userId) => {
   const rows = await db.query.projects.findMany({
-    where: (p, { eq, and }) => and(eq(p.userId, session.user.id), eq(p.type, "LEARN")),
+    where: (p, { eq, and }) => and(eq(p.userId, userId), eq(p.type, "LEARN")),
     orderBy: (p, { desc }) => desc(p.createdAt),
     with: { learnDetails: true, learnLessons: true },
   });
   return NextResponse.json(rows);
-}
+});
 
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (req, userId) => {
   const body = await req.json();
   const parsed = createCourseSchema.safeParse(body);
   if (!parsed.success) {
@@ -45,7 +35,7 @@ export async function POST(req: NextRequest) {
     const [project] = await tx
       .insert(projects)
       .values({
-        userId: session.user.id,
+        userId,
         name,
         type: "LEARN",
         startDate: startDate || null,
@@ -68,11 +58,11 @@ export async function POST(req: NextRequest) {
   });
 
   await logActivity({
-    userId: session.user.id,
+    userId,
     source: "LEARN",
     action: "learn.course_created",
     title: result.name,
   });
 
   return NextResponse.json(result, { status: 201 });
-}
+});

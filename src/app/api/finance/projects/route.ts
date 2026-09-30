@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { withAuth } from "@/lib/withAuth";
+import { vnMonthBounds } from "@/lib/vn-time";
 import { db } from "@/db";
 import { projects, financeAccounts, financeBalanceSnapshots, financeCategories } from "@/db/schema";
 import { eq, and, lt, isNull } from "drizzle-orm";
@@ -15,55 +16,31 @@ const DEFAULT_CATEGORIES: { name: string; icon: string; kind: "INCOME" | "EXPENS
   { name: "Thu nhập khác", icon: "💵", kind: "INCOME" },
 ];
 
-function monthBounds(date: Date) {
-  const y = date.getUTCFullYear();
-  const m = date.getUTCMonth();
-  const start = new Date(Date.UTC(y, m, 1));
-  const end = new Date(Date.UTC(y, m + 1, 0)); // ngày cuối tháng
-  return { start, end };
-}
-
-function toIsoDate(d: Date) {
-  return d.toISOString().slice(0, 10);
-}
-
-const MONTH_NAMES = [
-  "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
-];
-
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth(async (_req, userId) => {
   const rows = await db.query.projects.findMany({
-    where: (p, { eq: eqOp, and: andOp }) => andOp(eqOp(p.userId, session.user.id), eqOp(p.type, "FINANCE")),
+    where: (p, { eq: eqOp, and: andOp }) => andOp(eqOp(p.userId, userId), eqOp(p.type, "FINANCE")),
     orderBy: (p, { desc }) => desc(p.startDate),
   });
   return NextResponse.json(rows);
-}
+});
 
 // Idempotent: gọi bao nhiêu lần trong cùng 1 tháng cũng chỉ trả về đúng 1 project.
 // Đồng thời tự archive project tháng cũ đã qua endDate — "kết thúc mỗi tháng" đúng nghĩa đen.
-export async function POST() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-  const userId = session.user.id;
+export const POST = withAuth(async (_req, userId) => {
   const now = new Date();
-  const { start, end } = monthBounds(now);
+  // Tháng theo giờ VN: theo UTC, 0h–7h sáng ngày 1 vẫn tính là tháng trước →
+  // không tạo được tháng mới và chưa lưu trữ tháng cũ.
+  const { year, month, start, end } = vnMonthBounds(now);
 
   const result = await db.transaction(async (tx) => {
     // Archive mọi project FINANCE đã qua endDate mà chưa archive
     await tx
       .update(projects)
       .set({ archivedAt: now })
-      .where(and(eq(projects.userId, userId), eq(projects.type, "FINANCE"), isNull(projects.archivedAt), lt(projects.endDate, toIsoDate(start))));
+      .where(and(eq(projects.userId, userId), eq(projects.type, "FINANCE"), isNull(projects.archivedAt), lt(projects.endDate, start)));
 
     const existing = await tx.query.projects.findFirst({
-      where: and(eq(projects.userId, userId), eq(projects.type, "FINANCE"), eq(projects.startDate, toIsoDate(start))),
+      where: and(eq(projects.userId, userId), eq(projects.type, "FINANCE"), eq(projects.startDate, start)),
     });
     if (existing) return { project: existing, isNew: false };
 
@@ -77,10 +54,10 @@ export async function POST() {
       .insert(projects)
       .values({
         userId,
-        name: `Tài chính — Tháng ${MONTH_NAMES[now.getUTCMonth()]}/${now.getUTCFullYear()}`,
+        name: `Tài chính — Tháng ${month}/${year}`,
         type: "FINANCE",
-        startDate: toIsoDate(start),
-        endDate: toIsoDate(end),
+        startDate: start,
+        endDate: end,
       })
       .returning();
 
@@ -104,4 +81,4 @@ export async function POST() {
   }
 
   return NextResponse.json(result.project, { status: 201 });
-}
+});

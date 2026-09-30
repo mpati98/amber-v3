@@ -1,22 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { financeAccounts, financeTransactions } from "@/db/schema";
 import { logActivity } from "@/lib/activity-log";
 import { eq, and, sql } from "drizzle-orm";
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+export const DELETE = withAuth(async (_req, userId, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
 
-  await db.transaction(async (tx) => {
+  const found = await db.transaction(async (tx) => {
     const existing = await tx.query.financeTransactions.findFirst({
-      where: and(eq(financeTransactions.id, id), eq(financeTransactions.userId, session.user.id)),
+      where: and(eq(financeTransactions.id, id), eq(financeTransactions.userId, userId)),
     });
-    if (!existing) throw new Error("not_found");
+    if (!existing) return false;
 
     const amount = Number(existing.amount);
     const delta = existing.kind === "INCOME" ? -amount : amount; // đảo ngược tác động cũ
@@ -27,10 +23,15 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
       .where(eq(financeAccounts.id, existing.accountId));
 
     await tx.delete(financeTransactions).where(eq(financeTransactions.id, id));
+    return true;
   });
+  // Trước đây throw → 500 khi không tìm thấy.
+  if (!found) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
 
   logActivity({
-    userId: session.user.id,
+    userId,
     source: "FINANCE",
     action: "transaction.deleted",
     title: `Xóa giao dịch: ${id}`,
@@ -38,4 +39,4 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   });
 
   return NextResponse.json({ success: true });
-}
+});

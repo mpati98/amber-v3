@@ -39,7 +39,9 @@ Trả lời DUY NHẤT bằng JSON hợp lệ, không thêm chữ nào khác, kh
     if (!parsed) throw new Error("parse_failed");
     return {
       cefrLevel: parsed.cefrLevel ?? null,
-      score: typeof parsed.score === "number" ? parsed.score : null,
+      // Cột skill_scores.score là integer — LLM có thể trả số lẻ (72.5) hoặc số
+      // tràn (1e400 → Infinity khi parse), ghi thẳng sẽ lỗi 500.
+      score: typeof parsed.score === "number" && Number.isFinite(parsed.score) ? Math.round(parsed.score) : null,
       feedback: parsed.feedback ?? "",
     };
   } catch {

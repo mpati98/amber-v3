@@ -1,16 +1,11 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { SKILLS } from "@/lib/skills";
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth(async (_req, userId) => {
   const rows = await db.query.skillScores.findMany({
-    where: (s, { eq }) => eq(s.userId, session.user.id),
+    where: (s, { eq }) => eq(s.userId, userId),
   });
   const bySkill = new Map(rows.map((r) => [r.skill, r]));
 
@@ -25,4 +20,4 @@ export async function GET() {
   });
 
   return NextResponse.json(result);
-}
+});

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { skillScores } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
@@ -62,13 +62,7 @@ async function upsertSkill(userId: string, skill: string, cefrLevel: string | nu
   }
 }
 
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-  const userId = session.user.id;
-
+export const POST = withAuth(async (req, userId) => {
   const body = await req.json();
   const parsed = submitSchema.safeParse(body);
   if (!parsed.success) {
@@ -115,4 +109,4 @@ export async function POST(req: NextRequest) {
     },
     writingFeedback: writingEval.feedback,
   });
-}
+});

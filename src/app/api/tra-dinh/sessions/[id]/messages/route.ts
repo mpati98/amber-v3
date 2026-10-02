@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { projects, practiceMessages } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -11,11 +11,7 @@ const sendMessageSchema = z.object({
   audioUrl: z.string().optional(),
 });
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+export const POST = withAuth(async (req, userId, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
 
   const body = await req.json();
@@ -26,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { content, audioUrl } = parsed.data;
 
   const project = await db.query.projects.findFirst({
-    where: and(eq(projects.id, id), eq(projects.userId, session.user.id), eq(projects.type, "PRACTICE")),
+    where: and(eq(projects.id, id), eq(projects.userId, userId), eq(projects.type, "PRACTICE")),
     with: { practiceDetails: true, practiceMessages: { orderBy: (m, { asc }) => asc(m.createdAt) } },
   });
   if (!project) return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -59,4 +55,4 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .returning();
 
   return NextResponse.json({ userMessage, assistantMessage }, { status: 201 });
-}
+});

@@ -34,6 +34,7 @@ Vercel" và tận dụng được toàn bộ phần backend đã ổn định �
 dùng xác nhận trước khi bắt tay code.
 
 Các quyết định phụ cần chốt kèm theo:
+
 - **State management Flutter**: Riverpod/Bloc/Provider — v3 dùng React state
   cục bộ + fetch-on-mount khắp nơi (không có global store/cache layer như
   React Query/SWR), nên port 1:1 sẽ tạo lại đúng pattern "mỗi trang tự fetch"
@@ -79,6 +80,7 @@ v3 — chỉ bỏ phần render UI (App Router pages) đi, giữ lại `src/app/
 ## 2. Kiến trúc dữ liệu đầy đủ
 
 ### 2.1 Drizzle — domain chính (`src/db/schema.ts`, 1 file, quy tắc bắt buộc:
+
 mọi `pgTable()` PHẢI đứng trước mọi `relations()`, không xen kẽ — vi phạm gây
 lỗi TDZ lúc runtime mà `tsc` không bắt được)
 
@@ -130,6 +132,7 @@ Mọi bảng đều có `userId` (trừ bảng con tham chiếu qua `projectId`/
 dùng chung giữa nhiều user.
 
 ### 2.2 Prisma — domain Tàng Kinh Các (`prisma/schema.prisma`, CÙNG
+
 `DATABASE_URL` với Drizzle ở trên — 2 ORM, 1 database)
 
 ```
@@ -187,17 +190,18 @@ số cảnh báo chưa đọc (gọi `/api/kieu-lau/notifications`) + link Cài 
   tính năng "gợi ý ngẫu nhiên" trên trang chủ hoặc widget riêng
 
 ### 3.3 Nghị Sự Đường (`/nghi-su-duong`) — hub gộp 3 domain, mỗi domain có
+
 overview riêng gọi lúc load hub
 
 - **Dự án thông thường** (`/du-an`): 3 tab —
-  - *Tổng quan* (mặc định, DATA THẬT): lời chào theo giờ, 4 thẻ số liệu
+  - _Tổng quan_ (mặc định, DATA THẬT): lời chào theo giờ, 4 thẻ số liệu
     (task hôm nay/đang làm/dự án chạy/TB hoàn thành), list task hôm nay +
     badge trạng thái/tag mức độ quan trọng, progress bar dự án đang chạy,
     list dự án sắp tới
-  - *Lịch* (⚠️ **MOCK DATA** — `src/lib/mock-data.ts`, chưa nối API thật):
+  - _Lịch_ (⚠️ **MOCK DATA** — `src/lib/mock-data.ts`, chưa nối API thật):
     Week grid + Month Gantt, click ngày xem chi tiết (biểu đồ hiệu suất theo
     giờ + nhóm task phụ)
-  - *Việc hôm nay* (⚠️ **MOCK DATA** — cùng file mock-data.ts): tương tự chi
+  - _Việc hôm nay_ (⚠️ **MOCK DATA** — cùng file mock-data.ts): tương tự chi
     tiết 1 ngày nhưng full-page
   - **Việc cần làm khi build v4**: 2 trong 3 tab này chưa có API thật đứng
     sau — nếu v4 muốn tính năng này hoạt động thật, cần thiết kế thêm
@@ -220,6 +224,7 @@ overview riêng gọi lúc load hub
   không lưu lịch sử)
 
 ### 3.5 Trà Đình (`/tra-dinh`, `/tra-dinh/[sessionId]`,
+
 `/tra-dinh/placement-test`) — luyện tiếng Anh với AI
 
 - **Bài test đầu vào** (1 lần/lần làm lại, không lưu nháp giữa chừng): 25 câu
@@ -245,6 +250,7 @@ overview riêng gọi lúc load hub
 
 **Groq API** (`https://api.groq.com/openai/v1`, key qua `GROQ_API_KEY`) — 3
 use case trong Trà Đình:
+
 - Chat completion, model `openai/gpt-oss-120b` — đã verify TRỰC TIẾP bằng
   cách gọi `GET /v1/models` với chính key của project (không tin theo doc
   Groq vì doc từng liệt kê model đã bị revoke quyền truy cập)
@@ -270,6 +276,7 @@ Telegram vào roadmap v4 không, hay bỏ hẳn phần stub này (bớt 1 depend
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## 5. Design system — 2 theme SONG SONG, áp dụng theo NGỮ CẢNH (không phải
+
 tuỳ chọn của user)
 
 **Quan trọng**: đây là phát hiện chính xác từ scan trực tiếp className trong
@@ -277,6 +284,7 @@ từng file (không suy đoán) — theme không phải light/dark switch mà ng
 dùng chọn, mà 2 bảng màu cố định cho 2 NHÓM MÀN HÌNH khác nhau:
 
 ### 5.1 Theme tối "Âm Dương Giới" — dùng cho TOÀN BỘ trang nội dung (trang
+
 chủ + cả 4 tòa + mọi trang con của chúng)
 
 ```
@@ -301,6 +309,7 @@ thể glow yugen/shuiro/kincha), `ProgressBar` (gradient yugen→kincha),
 `StatusBadge`, `RatingStars`, `TypeTag`.
 
 Pattern modal chuẩn (dark dialog):
+
 ```
 <Dialog><DialogContent className="dark border border-white/10 bg-ink-900">
   <DialogTitle className="font-serif-display text-kincha-400">...
@@ -315,6 +324,7 @@ container glow màu động theo tham số, tương đương pattern
 "hover glow" cần đổi thành press/selected state vì không có hover thật).
 
 ### 5.2 Theme sáng "đất nung" (earth-tone shadcn) — CHỈ dùng ở 3 trang:
+
 `/login`, `/register`, `/settings`
 
 ```
@@ -327,8 +337,9 @@ container glow màu động theo tham số, tương đương pattern
 Build trên biến CSS chuẩn shadcn (`--background`, `--foreground`, `--card`,
 `--primary`... ánh xạ từ bảng màu đất nung ở trên), dùng component
 `@/components/ui/*` (Button/Dialog/Input/Label/Tabs — dựng trên `@base-ui/react`
-+ `class-variance-authority`). Có sẵn biến `.dark` (oklch xám chuẩn shadcn)
-nhưng KHÔNG dùng thực tế — 3 trang này luôn ở chế độ sáng.
+
+- `class-variance-authority`). Có sẵn biến `.dark` (oklch xám chuẩn shadcn)
+  nhưng KHÔNG dùng thực tế — 3 trang này luôn ở chế độ sáng.
 
 **Cho Flutter**: có thể dựng thành `ThemeData.light()` riêng biệt, chỉ áp
 dụng cho luồng auth/settings — 2 `ThemeData` khác nhau trong cùng
@@ -368,7 +379,8 @@ i18n/l10n formal (flutter gen-l10n) hay giữ hardcode string tiếng Việt nh�
 // Mọi route (trừ /api/auth/**, /api/health, /api/telegram/webhook — verify
 // bằng secret token riêng) đều mở đầu bằng:
 const session = await auth();
-if (!session?.user?.id) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+if (!session?.user?.id)
+  return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 // Ghi dữ liệu → validate bằng zod .safeParse(), 400 + error.flatten() nếu fail
 // Mọi query lọc theo session.user.id — không có endpoint nào trả chéo user
 // Sau khi ghi thành công → logActivity({userId, source, action, title, metadata?})

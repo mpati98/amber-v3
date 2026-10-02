@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { z } from "zod";
 import { groqSpeak } from "@/lib/groq";
 
@@ -7,12 +7,7 @@ const speakSchema = z.object({
   text: z.string().min(1).max(2000),
 });
 
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (req) => {
   const body = await req.json();
   const parsed = speakSchema.safeParse(body);
   if (!parsed.success) {
@@ -25,4 +20,4 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: "ai_unavailable" }, { status: 502 });
   }
-}
+});

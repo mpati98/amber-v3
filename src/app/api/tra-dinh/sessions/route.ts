@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { projects, practiceSessionDetails } from "@/db/schema";
 import { logActivity } from "@/lib/activity-log";
@@ -16,26 +16,16 @@ const MODE_NAME: Record<string, string> = {
   PROFESSIONAL: "Tiếng Anh chuyên nghiệp",
 };
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth(async (_req, userId) => {
   const rows = await db.query.projects.findMany({
-    where: (p, { eq, and }) => and(eq(p.userId, session.user.id), eq(p.type, "PRACTICE")),
+    where: (p, { eq, and }) => and(eq(p.userId, userId), eq(p.type, "PRACTICE")),
     orderBy: (p, { desc }) => desc(p.createdAt),
     with: { practiceDetails: true },
   });
   return NextResponse.json(rows);
-}
+});
 
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (req, userId) => {
   const body = await req.json();
   const parsed = createSessionSchema.safeParse(body);
   if (!parsed.success) {
@@ -48,7 +38,7 @@ export async function POST(req: NextRequest) {
     const [project] = await tx
       .insert(projects)
       .values({
-        userId: session.user.id,
+        userId,
         name: name || `${MODE_NAME[mode]} — ${now.toLocaleDateString("vi-VN")}`,
         type: "PRACTICE",
         startDate: now.toISOString().slice(0, 10),
@@ -64,7 +54,7 @@ export async function POST(req: NextRequest) {
   });
 
   logActivity({
-    userId: session.user.id,
+    userId,
     source: "TRA_DINH",
     action: "session.created",
     title: `Bắt đầu buổi: ${result.name}`,
@@ -72,4 +62,4 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json(result, { status: 201 });
-}
+});

@@ -24,6 +24,7 @@ const SELF_AUTH_API_PREFIXES = [
   "/api/du-an",
   "/api/finance",
   "/api/learn",
+  "/api/tra-dinh",
 ];
 
 function isSelfAuthApi(pathname: string): boolean {

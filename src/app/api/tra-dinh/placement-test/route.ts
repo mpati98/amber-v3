@@ -1,13 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { withAuth } from "@/lib/withAuth";
 import placementTest from "@/lib/placement-test.json";
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAuth(async () => {
   const { testId, title, description, instructions, grammarVocabulary, reading, writing } = placementTest;
 
   return NextResponse.json({
@@ -23,4 +18,4 @@ export async function GET() {
     },
     writing,
   });
-}
+});

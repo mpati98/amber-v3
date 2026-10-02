@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { projects, practiceSessionDetails, skillScores } from "@/db/schema";
 import { logActivity } from "@/lib/activity-log";
@@ -7,15 +7,11 @@ import { eq, and } from "drizzle-orm";
 import { groqChatCompletion, parseJsonFromModel } from "@/lib/groq";
 import { SKILLS, type Skill } from "@/lib/skills";
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+export const GET = withAuth(async (_req, userId, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
 
   const project = await db.query.projects.findFirst({
-    where: and(eq(projects.id, id), eq(projects.userId, session.user.id), eq(projects.type, "PRACTICE")),
+    where: and(eq(projects.id, id), eq(projects.userId, userId), eq(projects.type, "PRACTICE")),
     with: {
       practiceDetails: true,
       practiceMessages: { orderBy: (m, { asc }) => asc(m.createdAt) },
@@ -24,20 +20,15 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   if (!project) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
   return NextResponse.json(project);
-}
+});
 
 type EvalResult = {
   summary: string;
   skills?: Partial<Record<Skill, { score?: number; cefrLevel?: string }>>;
 };
 
-export async function PATCH(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+export const PATCH = withAuth(async (_req, userId, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
-  const userId = session.user.id;
 
   const project = await db.query.projects.findFirst({
     where: and(eq(projects.id, id), eq(projects.userId, userId), eq(projects.type, "PRACTICE")),
@@ -136,4 +127,4 @@ Chỉ đánh giá những kỹ năng thực sự thể hiện rõ trong bản gh
   });
 
   return NextResponse.json(result);
-}
+});

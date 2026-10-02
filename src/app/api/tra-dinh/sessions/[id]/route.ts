@@ -91,6 +91,11 @@ Chỉ đánh giá những kỹ năng thực sự thể hiện rõ trong bản gh
       for (const skill of SKILLS) {
         const skillEval = evalResult.skills[skill];
         if (!skillEval) continue;
+        // Cột skill_scores.score là integer — LLM có thể trả số lẻ (72.5), ghi
+        // thẳng sẽ lỗi và rollback cả việc kết thúc buổi. Không phải số hữu hạn
+        // thì coi như AI không chấm kỹ năng này.
+        const aiScore =
+          typeof skillEval.score === "number" && Number.isFinite(skillEval.score) ? Math.round(skillEval.score) : null;
 
         const existing = await tx.query.skillScores.findFirst({
           where: and(eq(skillScores.userId, userId), eq(skillScores.skill, skill)),
@@ -99,7 +104,7 @@ Chỉ đánh giá những kỹ năng thực sự thể hiện rõ trong bản gh
           await tx
             .update(skillScores)
             .set({
-              score: skillEval.score ?? existing.score,
+              score: aiScore ?? existing.score,
               cefrLevel: skillEval.cefrLevel ?? existing.cefrLevel,
               updatedAt: now,
             })
@@ -108,7 +113,7 @@ Chỉ đánh giá những kỹ năng thực sự thể hiện rõ trong bản gh
           await tx.insert(skillScores).values({
             userId,
             skill,
-            score: skillEval.score ?? null,
+            score: aiScore,
             cefrLevel: skillEval.cefrLevel ?? null,
           });
         }

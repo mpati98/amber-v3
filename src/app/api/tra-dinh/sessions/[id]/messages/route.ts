@@ -28,10 +28,10 @@ export const POST = withAuth(async (req, userId, { params }: { params: Promise<{
   if (!project) return NextResponse.json({ error: "not_found" }, { status: 404 });
   if (project.archivedAt) return NextResponse.json({ error: "session_ended" }, { status: 400 });
 
-  const [userMessage] = await db
-    .insert(practiceMessages)
-    .values({ projectId: id, role: "USER", content, audioUrl: audioUrl || null })
-    .returning();
+  // Thời điểm người học gửi — ghi tường minh vì tin user giờ chỉ được insert
+  // sau khi AI trả lời (cùng transaction với tin assistant, mà defaultNow() trong
+  // 1 transaction trả cùng 1 giá trị → 2 tin trùng created_at, thứ tự lẫn lộn).
+  const sentAt = new Date();
 
   const history: ChatMessage[] = [
     { role: "system", content: buildTutorSystemPrompt(project.practiceDetails?.mode ?? "CONVERSATION") },
@@ -42,17 +42,28 @@ export const POST = withAuth(async (req, userId, { params }: { params: Promise<{
     { role: "user", content },
   ];
 
+  // Tin mới đã nằm cuối history (lấy từ body, không cần có trong DB) — gọi AI
+  // trước, lỗi thì không ghi gì: trước đây tin user được ghi trước, AI lỗi để
+  // lại tin mồ côi, người dùng gửi lại → tin trùng.
   let assistantContent: string;
   try {
     assistantContent = await groqChatCompletion(history);
   } catch {
     return NextResponse.json({ error: "ai_unavailable" }, { status: 502 });
   }
+  const repliedAt = new Date();
 
-  const [assistantMessage] = await db
-    .insert(practiceMessages)
-    .values({ projectId: id, role: "ASSISTANT", content: assistantContent })
-    .returning();
+  const { userMessage, assistantMessage } = await db.transaction(async (tx) => {
+    const [userMessage] = await tx
+      .insert(practiceMessages)
+      .values({ projectId: id, role: "USER", content, audioUrl: audioUrl || null, createdAt: sentAt })
+      .returning();
+    const [assistantMessage] = await tx
+      .insert(practiceMessages)
+      .values({ projectId: id, role: "ASSISTANT", content: assistantContent, createdAt: repliedAt })
+      .returning();
+    return { userMessage, assistantMessage };
+  });
 
   return NextResponse.json({ userMessage, assistantMessage }, { status: 201 });
 });

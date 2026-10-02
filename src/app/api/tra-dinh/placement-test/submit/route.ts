@@ -7,6 +7,7 @@ import { z } from "zod";
 import placementTest from "@/lib/placement-test.json";
 import { groqChatCompletion, parseJsonFromModel } from "@/lib/groq";
 import { logActivity } from "@/lib/activity-log";
+import { validCefrLevel } from "@/lib/skills";
 
 const submitSchema = z.object({
   grammarVocabularyAnswers: z.record(z.string(), z.number().int()),
@@ -38,7 +39,7 @@ Trả lời DUY NHẤT bằng JSON hợp lệ, không thêm chữ nào khác, kh
     const parsed = parseJsonFromModel<{ cefrLevel?: string; score?: number; feedback?: string }>(raw);
     if (!parsed) throw new Error("parse_failed");
     return {
-      cefrLevel: parsed.cefrLevel ?? null,
+      cefrLevel: validCefrLevel(parsed.cefrLevel),
       // Cột skill_scores.score là integer — LLM có thể trả số lẻ (72.5) hoặc số
       // tràn (1e400 → Infinity khi parse), ghi thẳng sẽ lỗi 500.
       score: typeof parsed.score === "number" && Number.isFinite(parsed.score) ? Math.round(parsed.score) : null,

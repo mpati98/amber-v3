@@ -5,7 +5,7 @@ import { projects, practiceSessionDetails, skillScores } from "@/db/schema";
 import { logActivity } from "@/lib/activity-log";
 import { eq, and } from "drizzle-orm";
 import { groqChatCompletion, parseJsonFromModel } from "@/lib/groq";
-import { SKILLS, type Skill } from "@/lib/skills";
+import { SKILLS, validCefrLevel, type Skill } from "@/lib/skills";
 
 export const GET = withAuth(async (_req, userId, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
@@ -96,6 +96,7 @@ Chỉ đánh giá những kỹ năng thực sự thể hiện rõ trong bản gh
         // thì coi như AI không chấm kỹ năng này.
         const aiScore =
           typeof skillEval.score === "number" && Number.isFinite(skillEval.score) ? Math.round(skillEval.score) : null;
+        const aiCefr = validCefrLevel(skillEval.cefrLevel);
 
         const existing = await tx.query.skillScores.findFirst({
           where: and(eq(skillScores.userId, userId), eq(skillScores.skill, skill)),
@@ -105,7 +106,7 @@ Chỉ đánh giá những kỹ năng thực sự thể hiện rõ trong bản gh
             .update(skillScores)
             .set({
               score: aiScore ?? existing.score,
-              cefrLevel: skillEval.cefrLevel ?? existing.cefrLevel,
+              cefrLevel: aiCefr ?? existing.cefrLevel,
               updatedAt: now,
             })
             .where(eq(skillScores.id, existing.id));
@@ -114,7 +115,7 @@ Chỉ đánh giá những kỹ năng thực sự thể hiện rõ trong bản gh
             userId,
             skill,
             score: aiScore,
-            cefrLevel: skillEval.cefrLevel ?? null,
+            cefrLevel: aiCefr,
           });
         }
       }

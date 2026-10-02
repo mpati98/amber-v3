@@ -32,28 +32,29 @@ export const PATCH = withAuth(async (req, userId, { params }: { params: Promise<
     });
     if (!project) return null;
 
-    const [updatedProject] = await tx
-      .update(projects)
-      .set({
-        ...(name !== undefined ? { name } : {}),
-        ...(startDate !== undefined ? { startDate } : {}),
-        ...(endDate !== undefined ? { endDate } : {}),
-        // Hoàn thành khóa học = archive project, đúng logic dùng chung archivedAt cho mọi loại
-        ...(status !== undefined ? { archivedAt: status === "COMPLETED" ? new Date() : null } : {}),
-      })
-      .where(eq(projects.id, id))
-      .returning();
+    const projectSet = {
+      ...(name !== undefined ? { name } : {}),
+      ...(startDate !== undefined ? { startDate } : {}),
+      ...(endDate !== undefined ? { endDate } : {}),
+      // Hoàn thành khóa học = archive project, đúng logic dùng chung archivedAt cho mọi loại
+      ...(status !== undefined ? { archivedAt: status === "COMPLETED" ? new Date() : null } : {}),
+    };
+    const detailsSet = {
+      ...(source !== undefined ? { source } : {}),
+      ...(field !== undefined ? { field } : {}),
+      ...(outcome !== undefined ? { outcome } : {}),
+      ...(status !== undefined ? { status } : {}),
+    };
 
-    const [updatedDetails] = await tx
-      .update(learnCourseDetails)
-      .set({
-        ...(source !== undefined ? { source } : {}),
-        ...(field !== undefined ? { field } : {}),
-        ...(outcome !== undefined ? { outcome } : {}),
-        ...(status !== undefined ? { status } : {}),
-      })
-      .where(eq(learnCourseDetails.projectId, id))
-      .returning();
+    // Chỉ UPDATE bảng nào có field đổi: Drizzle ném "No values to set" khi set({})
+    // rỗng — trước đây PATCH chỉ có outcome (ô "Kết quả đạt được") hoặc chỉ có
+    // name luôn lỗi 500.
+    const [updatedProject] = Object.keys(projectSet).length
+      ? await tx.update(projects).set(projectSet).where(eq(projects.id, id)).returning()
+      : [project];
+    const [updatedDetails] = Object.keys(detailsSet).length
+      ? await tx.update(learnCourseDetails).set(detailsSet).where(eq(learnCourseDetails.projectId, id)).returning()
+      : await tx.select().from(learnCourseDetails).where(eq(learnCourseDetails.projectId, id));
 
     return { ...updatedProject, learnDetails: updatedDetails };
   });

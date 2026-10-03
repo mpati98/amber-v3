@@ -1,14 +1,10 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
+// Chỉ còn API — giao diện web đã gỡ (Giai đoạn 2), app Flutter là client duy nhất.
 const PUBLIC_PATHS = [
-  "/login",
-  "/register",
   "/api/auth", // bao gồm cả /api/auth/register và các route của next-auth
   "/api/health",
-  // next/image tự gọi lại route nội bộ (không kèm cookie) để tối ưu ảnh local,
-  // nên assets tĩnh phải public — chặn ở đây sẽ làm mọi ảnh trong scene vỡ ảnh.
-  "/assets",
 ];
 
 // Prefix có route tự xác thực bằng withAuth — xem comment trong handler bên dưới.
@@ -25,6 +21,8 @@ const SELF_AUTH_API_PREFIXES = [
   "/api/finance",
   "/api/learn",
   "/api/tra-dinh",
+  // Hồ sơ + đổi mật khẩu (trước chỉ trang Cài đặt web gọi qua cookie).
+  "/api/user",
 ];
 
 function isSelfAuthApi(pathname: string): boolean {
@@ -51,14 +49,14 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  // API gọi mà chưa đăng nhập -> trả 401 thay vì redirect (client fetch không theo redirect HTML)
+  // API gọi mà chưa đăng nhập -> 401 JSON.
   if (req.nextUrl.pathname.startsWith("/api")) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const loginUrl = new URL("/login", req.nextUrl.origin);
-  loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
-  return NextResponse.redirect(loginUrl);
+  // Không còn trang web nào (đã gỡ UI) — path ngoài /api để Next tự trả 404,
+  // không redirect tới /login vốn cũng không còn tồn tại.
+  return NextResponse.next();
 });
 
 export const config = {

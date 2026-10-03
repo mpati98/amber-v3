@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { auth } from "@/lib/auth";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { refreshTokens, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -11,19 +11,14 @@ const changePasswordSchema = z.object({
   newPassword: z.string().min(8, "Mật khẩu mới tối thiểu 8 ký tự"),
 });
 
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAuth(async (req, userId) => {
   const body = await req.json();
   const parsed = changePasswordSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const user = await db.query.users.findFirst({ where: eq(users.id, session.user.id) });
+  const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
   if (!user) {
     return NextResponse.json({ error: "user not found" }, { status: 404 });
   }
@@ -34,7 +29,12 @@ export async function POST(req: NextRequest) {
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.newPassword, 10);
-  await db.update(users).set({ passwordHash }).where(eq(users.id, session.user.id));
+  // Thu hồi mọi refresh token của user cùng lúc đổi mật khẩu: mọi thiết bị
+  // mobile phải đăng nhập lại (access token đang có hết hạn trong ≤1h).
+  await db.transaction(async (tx) => {
+    await tx.update(users).set({ passwordHash }).where(eq(users.id, userId));
+    await tx.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
+  });
 
   return NextResponse.json({ ok: true });
-}
+});

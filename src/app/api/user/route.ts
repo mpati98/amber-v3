@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/withAuth";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -7,12 +7,7 @@ import { z } from "zod";
 
 const patchSchema = z.object({ name: z.string().min(1) });
 
-export async function PATCH(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export const PATCH = withAuth(async (req, userId) => {
   const body = await req.json();
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) {
@@ -22,8 +17,8 @@ export async function PATCH(req: NextRequest) {
   const [updated] = await db
     .update(users)
     .set({ name: parsed.data.name })
-    .where(eq(users.id, session.user.id))
+    .where(eq(users.id, userId))
     .returning({ id: users.id, name: users.name, email: users.email });
 
   return NextResponse.json(updated);
-}
+});

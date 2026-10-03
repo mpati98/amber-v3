@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/withAuth";
 import { z } from "zod";
-import { groqSpeak } from "@/lib/groq";
+import { aiUnavailableResponse, groqSpeak } from "@/lib/groq";
+
+// Gọi Groq (timeout 45s trong lib/groq.ts) — chừa thêm thời gian cho DB.
+export const maxDuration = 60;
 
 const speakSchema = z.object({
   text: z.string().min(1).max(2000),
@@ -17,7 +20,7 @@ export const POST = withAuth(async (req) => {
   try {
     const { audio, contentType } = await groqSpeak(parsed.data.text);
     return new NextResponse(new Uint8Array(audio), { headers: { "Content-Type": contentType } });
-  } catch {
-    return NextResponse.json({ error: "ai_unavailable" }, { status: 502 });
+  } catch (err) {
+    return aiUnavailableResponse(err);
   }
 });

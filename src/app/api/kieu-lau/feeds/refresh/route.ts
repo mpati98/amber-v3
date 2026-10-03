@@ -6,6 +6,9 @@ import { logActivity } from "@/lib/activity-log";
 import { eq } from "drizzle-orm";
 import Parser from "rss-parser";
 
+// Đọc nhiều RSS song song, mỗi feed tối đa 10s.
+export const maxDuration = 30;
+
 const parser = new Parser({ timeout: 10000 });
 const MAX_ITEMS_PER_SOURCE = 15;
 

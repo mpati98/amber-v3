@@ -4,7 +4,10 @@ import { db } from "@/db";
 import { projects, practiceMessages } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
-import { buildTutorSystemPrompt, groqChatCompletion, type ChatMessage } from "@/lib/groq";
+import { aiUnavailableResponse, buildTutorSystemPrompt, groqChatCompletion, type ChatMessage } from "@/lib/groq";
+
+// Gọi Groq (timeout 45s trong lib/groq.ts) — chừa thêm thời gian cho DB.
+export const maxDuration = 60;
 
 const sendMessageSchema = z.object({
   content: z.string().min(1),
@@ -48,8 +51,8 @@ export const POST = withAuth(async (req, userId, { params }: { params: Promise<{
   let assistantContent: string;
   try {
     assistantContent = await groqChatCompletion(history);
-  } catch {
-    return NextResponse.json({ error: "ai_unavailable" }, { status: 502 });
+  } catch (err) {
+    return aiUnavailableResponse(err);
   }
   const repliedAt = new Date();
 

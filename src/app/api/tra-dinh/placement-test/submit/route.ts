@@ -9,6 +9,9 @@ import { groqChatCompletion, parseJsonFromModel } from "@/lib/groq";
 import { logActivity } from "@/lib/activity-log";
 import { validCefrLevel } from "@/lib/skills";
 
+// Groq chấm bài viết (timeout 45s trong lib/groq.ts).
+export const maxDuration = 60;
+
 const submitSchema = z.object({
   grammarVocabularyAnswers: z.record(z.string(), z.number().int()),
   readingAnswers: z.record(z.string(), z.number().int()),

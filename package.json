@@ -9,6 +9,9 @@
     "lint": "eslint",
     "db:studio": "drizzle-kit studio"
   },
+  "engines": {
+    "node": "22.x"
+  },
   "dependencies": {
     "@vercel/blob": "^2.8.0",
     "bcryptjs": "^3.0.3",

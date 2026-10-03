@@ -4,8 +4,11 @@ import { db } from "@/db";
 import { projects, practiceSessionDetails, skillScores } from "@/db/schema";
 import { logActivity } from "@/lib/activity-log";
 import { eq, and } from "drizzle-orm";
-import { groqChatCompletion, parseJsonFromModel } from "@/lib/groq";
+import { aiUnavailableResponse, GroqError, groqChatCompletion, parseJsonFromModel } from "@/lib/groq";
 import { SKILLS, validCefrLevel, type Skill } from "@/lib/skills";
+
+// PATCH gọi Groq đánh giá cả buổi (timeout 45s trong lib/groq.ts).
+export const maxDuration = 60;
 
 export const GET = withAuth(async (_req, userId, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
@@ -63,14 +66,19 @@ Hãy đóng vai giám khảo đánh giá buổi luyện tập này. Trả lời 
 }
 Chỉ đánh giá những kỹ năng thực sự thể hiện rõ trong bản ghi (ví dụ buổi chat văn bản thì khó đánh giá LISTENING/SPEAKING) — với kỹ năng không đủ căn cứ, bỏ qua field đó trong "skills" thay vì đoán bừa.`;
 
+    // Groq lỗi/timeout hoặc trả JSON không hợp lệ → KHÔNG lưu trữ buổi, KHÔNG ghi
+    // điểm, trả 502 để client thử lại (buổi vẫn mở, không mất tóm tắt/điểm).
     try {
       const raw = await groqChatCompletion([{ role: "user", content: evalPrompt }]);
       evalResult = parseJsonFromModel<EvalResult>(raw);
-    } catch {
-      // Groq lỗi hoặc parse JSON thất bại — vẫn kết thúc buổi bình thường, chỉ là không có summary/skill mới.
-      evalResult = null;
+      if (!evalResult || typeof evalResult.summary !== "string" || !evalResult.summary.trim()) {
+        throw new GroqError(`Groq evaluation returned invalid JSON: ${raw.slice(0, 200)}`);
+      }
+    } catch (err) {
+      return aiUnavailableResponse(err);
     }
   }
+  // Bản ghi rỗng (chưa nhắn tin nào): không gọi AI, kết thúc buổi không tóm tắt/điểm như trước.
 
   const now = new Date();
 
